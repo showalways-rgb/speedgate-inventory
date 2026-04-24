@@ -71,7 +71,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               <Menu size={18} />
             </button>
             <span style={{ fontWeight: 700, fontSize: "16px", color: "var(--foreground)" }}>
-              스피드게이트 재고관리
+              재고관리 시스템
             </span>
           </div>
         )}

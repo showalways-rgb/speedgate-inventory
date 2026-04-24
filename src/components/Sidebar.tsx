@@ -68,7 +68,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
               <Package size={18} color="#5b6ee8" />
             </div>
             <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "15px" }}>
-              스피드게이트
+              재고관리 시스템
             </span>
           </div>
           {isMobile && (
@@ -81,10 +81,6 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
               <X size={16} />
             </button>
           )}
-        </div>
-        <p style={{ color: "var(--muted)", fontSize: "12px", margin: "6px 0 0", paddingLeft: "42px" }}>
-          재고관리 시스템
-        </p>
       </div>
 
       <nav style={{ padding: "12px 10px", flex: 1 }}>
