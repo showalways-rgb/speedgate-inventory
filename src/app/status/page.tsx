@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BarChart2, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BarChart2, Pencil, RefreshCw } from "lucide-react";
 
 interface Product { id: number; modelName: string; variant: string }
 interface Part    { id: number; name: string; unit: string }
@@ -24,6 +24,11 @@ export default function StatusPage() {
   const [productTxs, setProductTxs] = useState<ProductTx[]>([]);
   const [partTxs,    setPartTxs]    = useState<PartTx[]>([]);
   const [loading,    setLoading]    = useState(true);
+
+  // 현장명 인라인 편집 상태
+  const [editingId,   setEditingId]   = useState<{ type: "product" | "part"; id: number } | null>(null);
+  const [editingNote, setEditingNote] = useState("");
+  const editRef = useRef<HTMLInputElement>(null);
 
   // 필터 상태
   const [filterModel,   setFilterModel]   = useState("all");
@@ -68,6 +73,26 @@ export default function StatusPage() {
   const totalOut = (txs: { type: string; quantity: number }[]) => txs.filter(t => t.type === "OUT").reduce((s, t) => s + t.quantity, 0);
 
   const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+
+  const startEdit = (type: "product" | "part", id: number, note: string | null) => {
+    setEditingId({ type, id });
+    setEditingNote(note ?? "");
+    setTimeout(() => editRef.current?.focus(), 0);
+  };
+
+  const saveNote = async () => {
+    if (!editingId) return;
+    const url = editingId.type === "product"
+      ? `/api/product-transactions/${editingId.id}`
+      : `/api/part-transactions/${editingId.id}`;
+    await fetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ note: editingNote || null }) });
+    if (editingId.type === "product") {
+      setProductTxs(prev => prev.map(tx => tx.id === editingId.id ? { ...tx, note: editingNote || null } : tx));
+    } else {
+      setPartTxs(prev => prev.map(tx => tx.id === editingId.id ? { ...tx, note: editingNote || null } : tx));
+    }
+    setEditingId(null);
+  };
 
   return (
     <div>
@@ -158,7 +183,22 @@ export default function StatusPage() {
                         color: tx.type === "IN" ? "#16a34a" : "#dc2626" }}>
                         {tx.type === "IN" ? "+" : "−"}{tx.quantity}
                       </td>
-                      <td style={{ ...td, color: "var(--muted)" }}>{tx.note || "—"}</td>
+                      <td style={{ ...td, padding: "6px 10px" }}>
+                        {editingId?.type === "product" && editingId.id === tx.id ? (
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            <input ref={editRef} value={editingNote} onChange={e => setEditingNote(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") saveNote(); if (e.key === "Escape") setEditingId(null); }}
+                              style={{ flex: 1, padding: "4px 8px", border: "1px solid #7c3aed", borderRadius: "5px", fontSize: "13px", outline: "none" }} />
+                            <button onClick={saveNote} style={{ padding: "4px 10px", background: "#7c3aed", color: "white", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>저장</button>
+                            <button onClick={() => setEditingId(null)} style={{ padding: "4px 8px", background: "#e2e8f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>취소</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }} onClick={() => startEdit("product", tx.id, tx.note)}>
+                            <span style={{ color: tx.note ? "var(--foreground)" : "var(--muted)" }}>{tx.note || "—"}</span>
+                            <Pencil size={12} color="#94a3b8" />
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -239,7 +279,22 @@ export default function StatusPage() {
                         color: tx.type === "IN" ? "#16a34a" : "#dc2626" }}>
                         {tx.type === "IN" ? "+" : "−"}{tx.quantity}
                       </td>
-                      <td style={{ ...td, color: "var(--muted)" }}>{tx.note || "—"}</td>
+                      <td style={{ ...td, padding: "6px 10px" }}>
+                        {editingId?.type === "part" && editingId.id === tx.id ? (
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            <input ref={editRef} value={editingNote} onChange={e => setEditingNote(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") saveNote(); if (e.key === "Escape") setEditingId(null); }}
+                              style={{ flex: 1, padding: "4px 8px", border: "1px solid #7c3aed", borderRadius: "5px", fontSize: "13px", outline: "none" }} />
+                            <button onClick={saveNote} style={{ padding: "4px 10px", background: "#7c3aed", color: "white", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>저장</button>
+                            <button onClick={() => setEditingId(null)} style={{ padding: "4px 8px", background: "#e2e8f0", border: "none", borderRadius: "5px", fontSize: "12px", cursor: "pointer" }}>취소</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }} onClick={() => startEdit("part", tx.id, tx.note)}>
+                            <span style={{ color: tx.note ? "var(--foreground)" : "var(--muted)" }}>{tx.note || "—"}</span>
+                            <Pencil size={12} color="#94a3b8" />
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
