@@ -17,9 +17,9 @@ interface PartStock {
 
 const VARIANTS = ["Master", "Slave", "Center"];
 const VARIANT_COLORS: Record<string, { bg: string; color: string }> = {
-  Master: { bg: "#dbeafe", color: "#1d4ed8" },
-  Slave:  { bg: "#dcfce7", color: "#15803d" },
-  Center: { bg: "#fce7f3", color: "#be185d" },
+  Master: { bg: "#e0e7ff", color: "#4338ca" },
+  Slave:  { bg: "#d1fae5", color: "#065f46" },
+  Center: { bg: "#fdf4ff", color: "#7e22ce" },
 };
 
 export default function InventoryPage() {
@@ -107,7 +107,7 @@ export default function InventoryPage() {
                         const qty = getProductQty(model, v);
                         return (
                           <td key={v} style={{ ...td, textAlign: "center" }}>
-                            <span style={{ fontWeight: 600, fontSize: "16px", color: qty === 0 ? "#cbd5e1" : qty < 3 ? "#ef4444" : "#16a34a" }}>{qty}</span>
+                            <span style={{ fontWeight: 600, fontSize: "16px", color: qty === 0 ? "#cbd5e1" : qty < 3 ? "#e05c5c" : "#2d3748" }}>{qty}</span>
                             <span style={{ fontSize: "11px", color: "var(--muted)", marginLeft: "2px" }}>대</span>
                           </td>
                         );
@@ -118,7 +118,7 @@ export default function InventoryPage() {
               </table>
             </div>
           )}
-          <Legend items={[["#16a34a","3대 이상"], ["#ef4444","3대 미만 (주의)"], ["#cbd5e1","0대"]]} />
+          <Legend items={[["#2d3748","3대 이상"], ["#e05c5c","3대 미만 (주의)"], ["#cbd5e1","0대"]]} />
         </div>
       ) : (
         /* ── 부품 재고 목록 ── */
@@ -144,12 +144,12 @@ export default function InventoryPage() {
                         <td style={{ ...td, fontWeight: 500 }}>{s.part.name}</td>
                         <td style={{ ...td, textAlign: "center", color: "var(--muted)" }}>{s.part.unit}</td>
                         <td style={{ ...td, textAlign: "center" }}>
-                          <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#ef4444" : "#16a34a" }}>{s.quantity}</span>
+                          <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#e05c5c" : "#2d3748" }}>{s.quantity}</span>
                         </td>
                         <td style={{ ...td, textAlign: "center" }}>
                           <span style={{ padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500,
-                            background: s.quantity === 0 ? "#f1f5f9" : low ? "#fef2f2" : "#f0fdf4",
-                            color: s.quantity === 0 ? "#94a3b8" : low ? "#dc2626" : "#16a34a" }}>
+                            background: s.quantity === 0 ? "#f7f8fc" : low ? "#fff0f0" : "#f0fff4",
+                            color: s.quantity === 0 ? "#a0aec0" : low ? "#c53030" : "#276749" }}>
                             {s.quantity === 0 ? "재고 없음" : low ? "부족 주의" : "정상"}
                           </span>
                         </td>
@@ -160,7 +160,7 @@ export default function InventoryPage() {
               </table>
             </div>
           )}
-          <Legend items={[["#16a34a","5개 이상 (정상)"], ["#ef4444","5개 미만 (주의)"], ["#94a3b8","0개 (재고 없음)"]]} />
+          <Legend items={[["#276749","5개 이상 (정상)"], ["#e05c5c","5개 미만 (주의)"], ["#a0aec0","0개 (재고 없음)"]]} />
         </div>
       )}
     </div>

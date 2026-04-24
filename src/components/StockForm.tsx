@@ -16,8 +16,8 @@ export default function StockForm({ type }: Props) {
   const [tab, setTab] = useState<"product" | "part">("product");
 
   const isIN = type === "IN";
-  const accentColor = isIN ? "#22c55e" : "#f59e0b";
-  const accentBg   = isIN ? "#f0fdf4"  : "#fffbeb";
+  const accentColor = isIN ? "#38a169" : "#c5a028";
+  const accentBg   = isIN ? "#f0fff4"  : "#fffdf0";
 
   return (
     <div style={{ maxWidth: "640px" }}>
@@ -149,7 +149,7 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
                   flex: 1, padding: "9px 4px", borderRadius: "8px",
                   border: `1.5px solid ${active ? accentColor : "var(--border)"}`,
                   background: active ? accentBg : "white",
-                  color: active ? (type === "IN" ? "#15803d" : "#92400e") : "var(--foreground)",
+                  color: active ? (type === "IN" ? "#276749" : "#92400e") : "var(--foreground)",
                   fontWeight: active ? 700 : 400, fontSize: "13px",
                   cursor: selectedModel ? "pointer" : "not-allowed",
                   opacity: selectedModel ? 1 : 0.4,
@@ -163,8 +163,8 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       {/* 현재고 표시 */}
       {selectedProduct && (
         <div style={stockInfo(currentStock < 3)}>
-          현재 재고: <strong style={{ color: currentStock < 3 ? "#ef4444" : "var(--foreground)" }}>{currentStock}대</strong>
-          {type === "OUT" && currentStock === 0 && <span style={{ color: "#ef4444", marginLeft: "8px" }}>⚠ 재고 없음</span>}
+          현재 재고:           <strong style={{ color: currentStock < 3 ? "#e05c5c" : "var(--foreground)" }}>{currentStock}대</strong>
+          {type === "OUT" && currentStock === 0 && <span style={{ color: "#e05c5c", marginLeft: "8px" }}>⚠ 재고 없음</span>}
         </div>
       )}
 
@@ -262,10 +262,10 @@ function PartForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accentCol
       {/* 현재고 표시 */}
       {selectedPart && (
         <div style={stockInfo(currentStock < 5)}>
-          현재 재고: <strong style={{ color: currentStock < 5 ? "#ef4444" : "var(--foreground)" }}>
+          현재 재고:           <strong style={{ color: currentStock < 5 ? "#e05c5c" : "var(--foreground)" }}>
             {currentStock}{selectedPart.unit}
           </strong>
-          {type === "OUT" && currentStock === 0 && <span style={{ color: "#ef4444", marginLeft: "8px" }}>⚠ 재고 없음</span>}
+          {type === "OUT" && currentStock === 0 && <span style={{ color: "#e05c5c", marginLeft: "8px" }}>⚠ 재고 없음</span>}
         </div>
       )}
 
@@ -322,9 +322,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function MsgBox({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <div style={{ padding: "11px 14px", borderRadius: "8px", fontSize: "13px",
-      background: ok ? "#f0fdf4" : "#fef2f2",
-      border: `1px solid ${ok ? "#bbf7d0" : "#fecaca"}`,
-      color: ok ? "#16a34a" : "#dc2626" }}>
+      background: ok ? "#f0fff4" : "#fff5f5",
+      border: `1px solid ${ok ? "#9ae6b4" : "#feb2b2"}`,
+      color: ok ? "#276749" : "#c53030" }}>
       {children}
     </div>
   );
@@ -344,7 +344,7 @@ function SubmitBtn({ loading, color, children }: { loading: boolean; color: stri
 
 function stockInfo(isLow: boolean): React.CSSProperties {
   return { padding: "11px 14px", borderRadius: "8px", fontSize: "13px", color: "var(--muted)",
-    background: isLow ? "#fef2f2" : "#f8fafc", border: `1px solid ${isLow ? "#fecaca" : "var(--border)"}` };
+    background: isLow ? "#fff5f5" : "#f7f8fc", border: `1px solid ${isLow ? "#feb2b2" : "var(--border)"}` };
 }
 
 /* ─────────────── 스타일 상수 ─────────────── */

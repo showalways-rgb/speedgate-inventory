@@ -29,6 +29,7 @@ export default function Sidebar() {
         width: "220px",
         minHeight: "100vh",
         background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--border)",
         display: "flex",
         flexDirection: "column",
         position: "fixed",
@@ -41,49 +42,28 @@ export default function Sidebar() {
       <div
         style={{
           padding: "24px 20px 20px",
-          borderBottom: "1px solid #334155",
+          borderBottom: "1px solid var(--border)",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "4px",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
           <div
             style={{
               width: "32px",
               height: "32px",
-              background: "var(--primary)",
+              background: "#eef2ff",
               borderRadius: "8px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Package size={18} color="white" />
+            <Package size={18} color="#5b6ee8" />
           </div>
-          <span
-            style={{
-              color: "var(--sidebar-text)",
-              fontWeight: 700,
-              fontSize: "15px",
-              lineHeight: "1.2",
-            }}
-          >
+          <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "15px", lineHeight: "1.2" }}>
             스피드게이트
           </span>
         </div>
-        <p
-          style={{
-            color: "#64748b",
-            fontSize: "12px",
-            margin: 0,
-            paddingLeft: "42px",
-          }}
-        >
+        <p style={{ color: "var(--muted)", fontSize: "12px", margin: 0, paddingLeft: "42px" }}>
           재고관리 시스템
         </p>
       </div>
@@ -102,10 +82,8 @@ export default function Sidebar() {
                 padding: "10px 12px",
                 borderRadius: "8px",
                 marginBottom: "2px",
-                color: active ? "white" : "var(--sidebar-text)",
-                background: active
-                  ? "var(--sidebar-active)"
-                  : "transparent",
+                color: active ? "#4338ca" : "var(--sidebar-text)",
+                background: active ? "#eef2ff" : "transparent",
                 textDecoration: "none",
                 fontSize: "14px",
                 fontWeight: active ? 600 : 400,
@@ -113,13 +91,11 @@ export default function Sidebar() {
               }}
               onMouseEnter={(e) => {
                 if (!active)
-                  (e.currentTarget as HTMLElement).style.background =
-                    "var(--sidebar-hover)";
+                  (e.currentTarget as HTMLElement).style.background = "var(--sidebar-hover)";
               }}
               onMouseLeave={(e) => {
                 if (!active)
-                  (e.currentTarget as HTMLElement).style.background =
-                    "transparent";
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
               }}
             >
               <Icon size={16} />
@@ -132,8 +108,8 @@ export default function Sidebar() {
       <div
         style={{
           padding: "16px 20px",
-          borderTop: "1px solid #334155",
-          color: "#475569",
+          borderTop: "1px solid var(--border)",
+          color: "#a0aec0",
           fontSize: "11px",
         }}
       >

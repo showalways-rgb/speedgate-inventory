@@ -135,8 +135,8 @@ export default function SettingsPage() {
     <div style={{ maxWidth: "640px" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
-        <div style={iconBox("#f0fdf4")}>
-          <Settings size={22} color="#16a34a" />
+        <div style={iconBox("#eef2ff")}>
+          <Settings size={22} color="#5b6ee8" />
         </div>
         <div>
           <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "var(--foreground)" }}>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ===== 모델 관리 ===== */}
-      <SectionHeader icon={<Settings size={16} color="#3b82f6" />} bg="#eff6ff" title="모델 관리" />
+      <SectionHeader icon={<Settings size={16} color="#5b6ee8" />} bg="#eef2ff" title="모델 관리" />
 
       <div style={card}>
         <h2 style={cardTitle}>새 모델 추가</h2>
@@ -161,7 +161,7 @@ export default function SettingsPage() {
             placeholder="예: SG-700"
             style={inputStyle(!!addModelError)}
           />
-          <SubmitBtn disabled={addModelLoading || !newModel.trim()} loading={addModelLoading} color="#3b82f6">
+          <SubmitBtn disabled={addModelLoading || !newModel.trim()} loading={addModelLoading} color="#5b6ee8">
             <Plus size={15} /> {addModelLoading ? "추가 중..." : "추가"}
           </SubmitBtn>
         </form>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
 
       {/* ===== 부품 관리 ===== */}
       <div style={{ marginTop: "40px" }}>
-        <SectionHeader icon={<Wrench size={16} color="#f59e0b" />} bg="#fffbeb" title="부품 관리" />
+        <SectionHeader icon={<Wrench size={16} color="#c5a028" />} bg="#fffdf0" title="부품 관리" />
       </div>
 
       <div style={card}>
@@ -230,7 +230,7 @@ export default function SettingsPage() {
             placeholder="단위"
             style={{ ...inputStyle(false), flex: "0 0 70px", textAlign: "center" }}
           />
-          <SubmitBtn disabled={addPartLoading || !newPartName.trim()} loading={addPartLoading} color="#f59e0b">
+          <SubmitBtn disabled={addPartLoading || !newPartName.trim()} loading={addPartLoading} color="#c5a028">
             <Plus size={15} /> {addPartLoading ? "추가 중..." : "추가"}
           </SubmitBtn>
         </form>
@@ -346,8 +346,8 @@ function ViewRow({ label, badge, onEdit, onDelete }: { label: string; badge: str
         </span>
       </div>
       <div style={{ display: "flex", gap: "6px" }}>
-        <button onClick={onEdit} style={iconBtn("#eff6ff", "#3b82f6")} title="수정"><Pencil size={14} /></button>
-        <button onClick={onDelete} style={iconBtn("#fef2f2", "#ef4444")} title="삭제"><Trash2 size={14} /></button>
+        <button onClick={onEdit} style={iconBtn("#eef2ff", "#5b6ee8")} title="수정"><Pencil size={14} /></button>
+        <button onClick={onDelete} style={iconBtn("#fff0f0", "#e05c5c")} title="삭제"><Trash2 size={14} /></button>
       </div>
     </div>
   );
@@ -386,7 +386,7 @@ function DeleteConfirm({ label, error, onConfirm, onCancel }: {
       </p>
       {error && <ErrMsg style={{ marginBottom: "8px" }}>{error}</ErrMsg>}
       <div style={{ display: "flex", gap: "8px" }}>
-        <button onClick={onConfirm} style={{ padding: "6px 14px", borderRadius: "6px", border: "none", background: "#ef4444", color: "white", fontSize: "13px", fontWeight: 500, cursor: "pointer" }}>
+        <button onClick={onConfirm} style={{ padding: "6px 14px", borderRadius: "6px", border: "none", background: "#e05c5c", color: "white", fontSize: "13px", fontWeight: 500, cursor: "pointer" }}>
           삭제 확인
         </button>
         <button onClick={onCancel} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid var(--border)", background: "white", fontSize: "13px", cursor: "pointer" }}>
@@ -410,7 +410,7 @@ function SubmitBtn({ children, disabled, color }: { children: React.ReactNode; d
 }
 
 function ErrMsg({ children, style: s }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <p style={{ color: "#ef4444", fontSize: "13px", marginTop: "8px", marginBottom: 0, ...s }}>{children}</p>;
+  return <p style={{ color: "#c53030", fontSize: "13px", marginTop: "8px", marginBottom: 0, ...s }}>{children}</p>;
 }
 
 function Badge({ children }: { children: React.ReactNode }) {

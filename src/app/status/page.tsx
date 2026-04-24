@@ -204,25 +204,25 @@ export default function StatusPage() {
                 </tbody>
                 {/* 소계 */}
                 <tfoot>
-                  <tr style={{ background: "#1a3a2a" }}>
-                    <td colSpan={3} style={footTd}>입고 소계</td>
-                    <td style={{ ...footTd, textAlign: "center" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#dcfce7", color: "#16a34a" }}>입고</span>
+                  <tr style={{ background: "#f0fff4" }}>
+                    <td colSpan={3} style={footTdIn}>입고 소계</td>
+                    <td style={{ ...footTdIn, textAlign: "center" }}>
+                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#c6f6d5", color: "#276749" }}>입고</span>
                     </td>
-                    <td style={{ ...footTd, textAlign: "center", color: "#86efac", fontSize: "16px", fontWeight: 700 }}>
+                    <td style={{ ...footTdIn, textAlign: "center", color: "#276749", fontSize: "16px", fontWeight: 700 }}>
                       +{totalIn(filteredProductTxs)}대
                     </td>
-                    <td style={footTd} />
+                    <td style={footTdIn} />
                   </tr>
-                  <tr style={{ background: "#3a1a1a" }}>
-                    <td colSpan={3} style={{ ...footTd, borderTop: "1px solid #4b1a1a" }}>출고 소계</td>
-                    <td style={{ ...footTd, textAlign: "center", borderTop: "1px solid #4b1a1a" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#fee2e2", color: "#dc2626" }}>출고</span>
+                  <tr style={{ background: "#fff5f5" }}>
+                    <td colSpan={3} style={{ ...footTdOut, borderTop: "1px solid #fed7d7" }}>출고 소계</td>
+                    <td style={{ ...footTdOut, textAlign: "center", borderTop: "1px solid #fed7d7" }}>
+                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#fed7d7", color: "#c53030" }}>출고</span>
                     </td>
-                    <td style={{ ...footTd, textAlign: "center", color: "#fca5a5", fontSize: "16px", fontWeight: 700, borderTop: "1px solid #4b1a1a" }}>
+                    <td style={{ ...footTdOut, textAlign: "center", color: "#c53030", fontSize: "16px", fontWeight: 700, borderTop: "1px solid #fed7d7" }}>
                       −{totalOut(filteredProductTxs)}대
                     </td>
-                    <td style={{ ...footTd, borderTop: "1px solid #4b1a1a" }} />
+                    <td style={{ ...footTdOut, borderTop: "1px solid #fed7d7" }} />
                   </tr>
                 </tfoot>
               </table>
@@ -299,25 +299,25 @@ export default function StatusPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr style={{ background: "#1a3a2a" }}>
-                    <td colSpan={3} style={footTd}>입고 소계</td>
-                    <td style={{ ...footTd, textAlign: "center" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#dcfce7", color: "#16a34a" }}>입고</span>
+                  <tr style={{ background: "#f0fff4" }}>
+                    <td colSpan={3} style={footTdIn}>입고 소계</td>
+                    <td style={{ ...footTdIn, textAlign: "center" }}>
+                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#c6f6d5", color: "#276749" }}>입고</span>
                     </td>
-                    <td style={{ ...footTd, textAlign: "center", color: "#86efac", fontSize: "16px", fontWeight: 700 }}>
+                    <td style={{ ...footTdIn, textAlign: "center", color: "#276749", fontSize: "16px", fontWeight: 700 }}>
                       +{totalIn(filteredPartTxs)}
                     </td>
-                    <td style={footTd} />
+                    <td style={footTdIn} />
                   </tr>
-                  <tr style={{ background: "#3a1a1a" }}>
-                    <td colSpan={3} style={{ ...footTd, borderTop: "1px solid #4b1a1a" }}>출고 소계</td>
-                    <td style={{ ...footTd, textAlign: "center", borderTop: "1px solid #4b1a1a" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#fee2e2", color: "#dc2626" }}>출고</span>
+                  <tr style={{ background: "#fff5f5" }}>
+                    <td colSpan={3} style={{ ...footTdOut, borderTop: "1px solid #fed7d7" }}>출고 소계</td>
+                    <td style={{ ...footTdOut, textAlign: "center", borderTop: "1px solid #fed7d7" }}>
+                      <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, background: "#fed7d7", color: "#c53030" }}>출고</span>
                     </td>
-                    <td style={{ ...footTd, textAlign: "center", color: "#fca5a5", fontSize: "16px", fontWeight: 700, borderTop: "1px solid #4b1a1a" }}>
+                    <td style={{ ...footTdOut, textAlign: "center", color: "#c53030", fontSize: "16px", fontWeight: 700, borderTop: "1px solid #fed7d7" }}>
                       −{totalOut(filteredPartTxs)}
                     </td>
-                    <td style={{ ...footTd, borderTop: "1px solid #4b1a1a" }} />
+                    <td style={{ ...footTdOut, borderTop: "1px solid #fed7d7" }} />
                   </tr>
                 </tfoot>
               </table>
@@ -333,9 +333,9 @@ export default function StatusPage() {
 
 function Th({ children, width, center }: { children: React.ReactNode; width?: string; center?: boolean }) {
   return (
-    <th style={{ padding: "11px 16px", background: "#334155", color: "white", fontWeight: 600, fontSize: "13px",
+    <th style={{ padding: "11px 16px", background: "#f7f8fc", color: "#4a5568", fontWeight: 600, fontSize: "13px",
       whiteSpace: "nowrap", textAlign: center ? "center" : "left",
-      borderRight: "1px solid #475569", width }}>
+      borderRight: "1px solid var(--border)", borderBottom: "2px solid var(--border)", width }}>
       {children}
     </th>
   );
@@ -362,8 +362,9 @@ function VariantBadge({ variant }: { variant: string }) {
 }
 
 /* ── 스타일 상수 ── */
-const sel:       React.CSSProperties = { padding: "7px 11px", borderRadius: "7px", border: "1px solid var(--border)", fontSize: "13px", background: "white", cursor: "pointer", outline: "none" };
+const sel:       React.CSSProperties = { padding: "7px 11px", borderRadius: "7px", border: "1px solid var(--border)", fontSize: "13px", background: "white", cursor: "pointer", outline: "none", color: "var(--foreground)" };
 const emptyStyle: React.CSSProperties = { padding: "48px", textAlign: "center", color: "var(--muted)", fontSize: "14px", background: "white" };
 const tbl:       React.CSSProperties = { width: "100%", borderCollapse: "collapse", fontSize: "14px" };
-const td:        React.CSSProperties = { padding: "10px 16px", borderBottom: "1px solid #e2e8f0", borderRight: "1px solid #e2e8f0", verticalAlign: "middle" };
-const footTd:    React.CSSProperties = { padding: "10px 16px", color: "white", fontWeight: 600, borderTop: "2px solid #0f172a", borderRight: "1px solid #374151", verticalAlign: "middle" };
+const td:        React.CSSProperties = { padding: "10px 16px", borderBottom: "1px solid var(--border)", borderRight: "1px solid var(--border)", verticalAlign: "middle" };
+const footTdIn:  React.CSSProperties = { padding: "10px 16px", color: "#276749", fontWeight: 600, borderTop: "2px solid #c6f6d5", borderRight: "1px solid #c6f6d5", verticalAlign: "middle" };
+const footTdOut: React.CSSProperties = { padding: "10px 16px", color: "#c53030", fontWeight: 600, borderRight: "1px solid #fed7d7", verticalAlign: "middle" };
