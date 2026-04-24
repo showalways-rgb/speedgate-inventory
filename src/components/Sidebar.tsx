@@ -81,6 +81,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
               <X size={16} />
             </button>
           )}
+        </div>
       </div>
 
       <nav style={{ padding: "12px 10px", flex: 1 }}>
