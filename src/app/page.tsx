@@ -174,7 +174,7 @@ export default function Dashboard() {
 
 const sectionTitle: React.CSSProperties = { fontSize: "15px", fontWeight: 700, margin: "0 0 10px", display: "flex", alignItems: "center", gap: "8px", color: "#2d3748" } as React.CSSProperties;
 const unitBadge:    React.CSSProperties = { fontSize: "12px", color: "var(--muted)", fontWeight: 400 };
-const tableWrap:    React.CSSProperties = { border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" };
+const tableWrap:    React.CSSProperties = { border: "1px solid var(--border)", borderRadius: "10px", overflow: "auto", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" };
 const emptyStyle:   React.CSSProperties = { padding: "40px", textAlign: "center", color: "var(--muted)", fontSize: "14px", background: "white" };
 const tbl:          React.CSSProperties = { width: "100%", borderCollapse: "collapse", fontSize: "14px" };
 const th:           React.CSSProperties = { padding: "11px 16px", background: "#f7f8fc", color: "#4a5568", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap", borderRight: "1px solid var(--border)", borderBottom: "2px solid var(--border)", textAlign: "left" };

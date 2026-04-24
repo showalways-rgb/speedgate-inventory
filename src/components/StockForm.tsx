@@ -20,7 +20,7 @@ export default function StockForm({ type }: Props) {
   const accentBg   = isIN ? "#f0fff4"  : "#fffdf0";
 
   return (
-    <div style={{ maxWidth: "640px" }}>
+    <div style={{ maxWidth: "640px", width: "100%" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
         <div style={{ width: "44px", height: "44px", borderRadius: "10px", background: accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>

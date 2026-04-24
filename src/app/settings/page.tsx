@@ -132,7 +132,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: "640px" }}>
+    <div style={{ maxWidth: "640px", width: "100%" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
         <div style={iconBox("#eef2ff")}>

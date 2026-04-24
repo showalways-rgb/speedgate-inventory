@@ -87,8 +87,8 @@ export default function InventoryPage() {
           {models.length === 0 ? (
             <EmptyBox>등록된 제품이 없습니다.</EmptyBox>
           ) : (
-            <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflowX: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+            <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflow: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "400px" }}>
                 <thead>
                   <tr style={{ background: "#f8fafc", borderBottom: "2px solid var(--border)" }}>
                     <th style={th}>모델명</th>
@@ -126,8 +126,8 @@ export default function InventoryPage() {
           {partStocks.length === 0 ? (
             <EmptyBox>등록된 부품이 없습니다.</EmptyBox>
           ) : (
-            <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflowX: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+            <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflow: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "360px" }}>
                 <thead>
                   <tr style={{ background: "#f8fafc", borderBottom: "2px solid var(--border)" }}>
                     <th style={th}>부품명</th>

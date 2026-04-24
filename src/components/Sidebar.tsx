@@ -9,23 +9,42 @@ import {
   Package,
   BarChart2,
   Settings,
+  X,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/",        label: "재고 현황",   icon: LayoutDashboard },
-  { href: "/stock-in",  label: "입고",      icon: PackagePlus },
-  { href: "/stock-out", label: "출고",      icon: PackageMinus },
+  { href: "/",          label: "재고 현황",   icon: LayoutDashboard },
+  { href: "/stock-in",  label: "입고",        icon: PackagePlus },
+  { href: "/stock-out", label: "출고",        icon: PackageMinus },
   { href: "/status",    label: "입출고 현황", icon: BarChart2 },
-  { href: "/inventory", label: "현재고",    icon: Package },
-  { href: "/settings",  label: "설정",      icon: Settings },
+  { href: "/inventory", label: "현재고",      icon: Package },
+  { href: "/settings",  label: "설정",        icon: Settings },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isMobile = false, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
-  return (
-    <aside
-      style={{
+  const sidebarStyle: React.CSSProperties = isMobile
+    ? {
+        position: "fixed",
+        top: 0, left: 0, bottom: 0,
+        width: "260px",
+        background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        zIndex: 50,
+        transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.25s ease",
+        boxShadow: isOpen ? "4px 0 20px rgba(0,0,0,0.12)" : "none",
+      }
+    : {
         width: "220px",
         minHeight: "100vh",
         background: "var(--sidebar-bg)",
@@ -33,37 +52,37 @@ export default function Sidebar() {
         display: "flex",
         flexDirection: "column",
         position: "fixed",
-        top: 0,
-        left: 0,
-        bottom: 0,
+        top: 0, left: 0, bottom: 0,
         zIndex: 50,
-      }}
-    >
-      <div
-        style={{
-          padding: "24px 20px 20px",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-          <div
-            style={{
-              width: "32px",
-              height: "32px",
-              background: "#eef2ff",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Package size={18} color="#5b6ee8" />
+      };
+
+  return (
+    <aside style={sidebarStyle}>
+      <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px", height: "32px", background: "#eef2ff",
+              borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Package size={18} color="#5b6ee8" />
+            </div>
+            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "15px" }}>
+              스피드게이트
+            </span>
           </div>
-          <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "15px", lineHeight: "1.2" }}>
-            스피드게이트
-          </span>
+          {isMobile && (
+            <button onClick={onClose} style={{
+              width: "30px", height: "30px", borderRadius: "6px",
+              border: "none", background: "#f1f5f9", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--muted)",
+            }}>
+              <X size={16} />
+            </button>
+          )}
         </div>
-        <p style={{ color: "var(--muted)", fontSize: "12px", margin: 0, paddingLeft: "42px" }}>
+        <p style={{ color: "var(--muted)", fontSize: "12px", margin: "6px 0 0", paddingLeft: "42px" }}>
           재고관리 시스템
         </p>
       </div>
@@ -75,44 +94,31 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={isMobile ? onClose : undefined}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                marginBottom: "2px",
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "11px 12px", borderRadius: "8px", marginBottom: "2px",
                 color: active ? "#4338ca" : "var(--sidebar-text)",
                 background: active ? "#eef2ff" : "transparent",
                 textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: active ? 600 : 400,
+                fontSize: "14px", fontWeight: active ? 600 : 400,
                 transition: "background 0.15s",
               }}
               onMouseEnter={(e) => {
-                if (!active)
-                  (e.currentTarget as HTMLElement).style.background = "var(--sidebar-hover)";
+                if (!active) (e.currentTarget as HTMLElement).style.background = "var(--sidebar-hover)";
               }}
               onMouseLeave={(e) => {
-                if (!active)
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
               }}
             >
-              <Icon size={16} />
+              <Icon size={17} />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      <div
-        style={{
-          padding: "16px 20px",
-          borderTop: "1px solid var(--border)",
-          color: "#a0aec0",
-          fontSize: "11px",
-        }}
-      >
+      <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)", color: "#a0aec0", fontSize: "11px" }}>
         © 2025 Cian
       </div>
     </aside>

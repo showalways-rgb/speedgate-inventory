@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "스피드게이트 재고관리",
@@ -14,22 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body>
-        <div style={{ display: "flex" }}>
-          <Sidebar />
-          <main
-            style={{
-              marginLeft: "220px",
-              flex: 1,
-              minHeight: "100vh",
-              padding: "32px",
-              maxWidth: "100%",
-              overflowX: "hidden",
-            }}
-          >
-            {children}
-          </main>
-        </div>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

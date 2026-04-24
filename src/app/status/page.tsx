@@ -182,7 +182,7 @@ export default function StatusPage() {
             </span>
           </div>
 
-          <div style={{ border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+          <div style={{ border: "1px solid var(--border)", borderRadius: "10px", overflow: "auto", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
             {filteredProductTxs.length === 0 ? (
               <div style={emptyStyle}>내역이 없습니다.</div>
             ) : (
@@ -315,7 +315,7 @@ export default function StatusPage() {
             </span>
           </div>
 
-          <div style={{ border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+          <div style={{ border: "1px solid var(--border)", borderRadius: "10px", overflow: "auto", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
             {filteredPartTxs.length === 0 ? (
               <div style={emptyStyle}>내역이 없습니다.</div>
             ) : (
