@@ -17,6 +17,7 @@ const MOVING_AUTO_SUFFIXES = ["이동형_베이스", "이동형_상판", "이동
 interface Props { type: "IN" | "OUT" }
 
 const VARIANTS = ["Master", "Slave", "Center", "이동형"];
+const NO_VARIANT_IN_MODELS = ["BT-400", "BT-500"];
 
 export default function StockForm({ type }: Props) {
   const [tab, setTab] = useState<"product" | "part">("product");
@@ -88,6 +89,8 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
   const [selPartQty, setSelPartQty] = useState("");
 
   const isOUT = type === "OUT";
+  const isIN = type === "IN";
+  const isVariantFreeIn = isIN && NO_VARIANT_IN_MODELS.includes(selectedModel);
 
   useEffect(() => {
     // 누락된 파생모델(이동형 등) 자동 보완 후 데이터 로드
@@ -138,6 +141,9 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
 
   const selectedProduct = products.find(p => p.modelName === selectedModel && p.variant === selectedVariant);
   const currentStock = productStocks.find(s => s.productId === selectedProduct?.id)?.quantity ?? 0;
+  const currentModelTotalStock = products
+    .filter(p => p.modelName === selectedModel)
+    .reduce((sum, p) => sum + (productStocks.find(s => s.productId === p.id)?.quantity ?? 0), 0);
 
   const selectedPartForAdd = parts.find(p => p.id === parseInt(selPartId));
   const selPartCurrentStock = partStocks.find(s => s.partId === selectedPartForAdd?.id)?.quantity ?? 0;
@@ -170,7 +176,62 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quantity || !selectedModel || !selectedVariant) return;
+    if (!quantity || !selectedModel) return;
+    if (!isVariantFreeIn && !selectedVariant) return;
+
+    // BT-400/BT-500 입고는 파생모델 선택 없이 전체 파생에 동일 수량 입고
+    if (isVariantFreeIn) {
+      setLoading(true); setMessage(null);
+      const qty = parseInt(quantity);
+      if (isNaN(qty) || qty < 1) {
+        setLoading(false);
+        return;
+      }
+
+      await fetch("/api/ensure-variants", { method: "POST" });
+      const freshProducts: Product[] = await fetch("/api/products").then(r => r.json());
+      setProducts(freshProducts);
+      const targets = freshProducts.filter(p => p.modelName === selectedModel && VARIANTS.includes(p.variant));
+
+      if (targets.length === 0) {
+        setMessage({ ok: false, text: "입고할 파생모델을 찾을 수 없습니다. 설정에서 모델을 확인해주세요." });
+        setLoading(false);
+        return;
+      }
+
+      const results = await Promise.all(
+        targets.map(p =>
+          fetch("/api/product-transactions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: p.id, type: "IN", quantity: qty, note: note || null, date }),
+          }).then(r => r.json().then(d => ({ ok: r.ok, data: d, product: p })))
+        )
+      );
+
+      const failed = results.filter(r => !r.ok);
+      if (failed.length > 0) {
+        const errMsg = failed.map(f => `${f.product.variant}: ${f.data.error}`).join(", ");
+        setMessage({ ok: false, text: `입고 처리 중 오류: ${errMsg}` });
+        setLoading(false);
+        return;
+      }
+
+      setProductStocks(prev => {
+        const next = [...prev];
+        for (const p of targets) {
+          const idx = next.findIndex(s => s.productId === p.id);
+          if (idx >= 0) next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
+          else next.push({ productId: p.id, quantity: qty, product: p });
+        }
+        return next;
+      });
+
+      setMessage({ ok: true, text: `입고 완료: ${selectedModel} 파생 ${targets.length}종에 각 ${qty}대 (${date})` });
+      setQuantity(""); setNote(""); setPartItems([]);
+      setLoading(false);
+      return;
+    }
 
     // 클라이언트 상태에서 제품을 못 찾으면 서버에서 재조회
     let product = selectedProduct;
@@ -248,32 +309,40 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       </Field>
 
       {/* 파생 모델 */}
-      <Field label="파생 모델">
-        <div style={{ display: "flex", gap: "8px" }}>
-          {VARIANTS.map(v => {
-            const active = selectedVariant === v;
-            return (
-              <button key={v} type="button" disabled={!selectedModel}
-                onClick={() => setSelectedVariant(v)}
-                style={{
-                  flex: 1, padding: "9px 4px", borderRadius: "8px",
-                  border: `1.5px solid ${active ? accentColor : "var(--border)"}`,
-                  background: active ? accentBg : "white",
-                  color: active ? (type === "IN" ? "#276749" : "#92400e") : "var(--foreground)",
-                  fontWeight: active ? 700 : 400, fontSize: "13px",
-                  cursor: selectedModel ? "pointer" : "not-allowed",
-                  opacity: selectedModel ? 1 : 0.4,
-                }}
-              >{v}</button>
-            );
-          })}
+      {!isVariantFreeIn ? (
+        <Field label="파생 모델">
+          <div style={{ display: "flex", gap: "8px" }}>
+            {VARIANTS.map(v => {
+              const active = selectedVariant === v;
+              return (
+                <button key={v} type="button" disabled={!selectedModel}
+                  onClick={() => setSelectedVariant(v)}
+                  style={{
+                    flex: 1, padding: "9px 4px", borderRadius: "8px",
+                    border: `1.5px solid ${active ? accentColor : "var(--border)"}`,
+                    background: active ? accentBg : "white",
+                    color: active ? (type === "IN" ? "#276749" : "#92400e") : "var(--foreground)",
+                    fontWeight: active ? 700 : 400, fontSize: "13px",
+                    cursor: selectedModel ? "pointer" : "not-allowed",
+                    opacity: selectedModel ? 1 : 0.4,
+                  }}
+                >{v}</button>
+              );
+            })}
+          </div>
+        </Field>
+      ) : (
+        <div style={{ padding: "10px 12px", borderRadius: "8px", border: "1px solid #c6f6d5", background: "#f0fff4", color: "#276749", fontSize: "13px" }}>
+          {selectedModel} 입고는 파생모델 선택 없이 전체 파생에 동일 수량으로 등록됩니다.
         </div>
-      </Field>
+      )}
 
       {/* 현재 제품 재고 */}
-      {selectedProduct && (
+      {(selectedProduct || isVariantFreeIn) && (
         <div style={stockInfo(currentStock < 3)}>
-          현재 재고: <strong style={{ color: currentStock < 3 ? "#e05c5c" : "var(--foreground)" }}>{currentStock}대</strong>
+          현재 재고: <strong style={{ color: (isVariantFreeIn ? currentModelTotalStock : currentStock) < 3 ? "#e05c5c" : "var(--foreground)" }}>
+            {isVariantFreeIn ? `${currentModelTotalStock}대 (모델 합계)` : `${currentStock}대`}
+          </strong>
           {type === "OUT" && currentStock === 0 && <span style={{ color: "#e05c5c", marginLeft: "8px" }}>⚠ 재고 없음</span>}
         </div>
       )}
