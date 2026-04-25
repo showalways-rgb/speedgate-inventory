@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getComputedProductQty, recomputeProductStock } from "@/lib/stock-recompute";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -64,28 +65,22 @@ export async function POST(request: Request) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const existing = await tx.productStock.findUnique({ where: { productId } });
-      const current = existing?.quantity ?? 0;
+      const current = await getComputedProductQty(tx, productId);
 
       if (type === "OUT" && current < qty) {
         throw new Error(`재고 부족: 현재 재고 ${current}대`);
       }
 
-      const newQty = type === "IN" ? current + qty : current - qty;
-
-      await tx.productStock.upsert({
-        where: { productId },
-        create: { productId, quantity: newQty },
-        update: { quantity: newQty },
-      });
-
-      return tx.productTransaction.create({
+      const created = await tx.productTransaction.create({
         data: {
           productId, type, quantity: qty, note,
           ...(date ? { createdAt: new Date(date) } : {}),
         },
         include: { product: true },
       });
+
+      await recomputeProductStock(tx, productId);
+      return created;
     });
 
     return NextResponse.json(result, { status: 201 });

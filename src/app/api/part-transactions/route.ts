@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getComputedPartQty, recomputePartStock } from "@/lib/stock-recompute";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -39,23 +40,15 @@ export async function POST(request: Request) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const existing = await tx.partStock.findUnique({ where: { partId } });
-      const current = existing?.quantity ?? 0;
+      const current = await getComputedPartQty(tx, partId);
 
       if (type === "OUT" && current < qty) {
-        throw new Error(`재고 부족: 현재 재고 ${current}${""}`);
+        throw new Error(`재고 부족: 현재 재고 ${current}`);
       }
 
-      const newQty = type === "IN" ? current + qty : current - qty;
-
-      await tx.partStock.upsert({
-        where: { partId },
-        create: { partId, quantity: newQty },
-        update: { quantity: newQty },
-      });
-
+      let created;
       try {
-        return await tx.partTransaction.create({
+        created = await tx.partTransaction.create({
           data: {
             partId, type, quantity: qty, note,
             ...(date ? { createdAt: new Date(date) } : {}),
@@ -65,7 +58,7 @@ export async function POST(request: Request) {
         });
       } catch {
         // 구버전 DB(관계 컬럼 미반영)에서는 연결 없이도 부품 출고가 진행되도록 폴백
-        return tx.partTransaction.create({
+        created = await tx.partTransaction.create({
           data: {
             partId, type, quantity: qty, note,
             ...(date ? { createdAt: new Date(date) } : {}),
@@ -73,6 +66,9 @@ export async function POST(request: Request) {
           include: { part: true },
         });
       }
+
+      await recomputePartStock(tx, partId);
+      return created;
     });
 
     return NextResponse.json(result, { status: 201 });
