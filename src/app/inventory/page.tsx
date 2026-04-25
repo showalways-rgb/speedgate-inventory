@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, Wrench, RefreshCw } from "lucide-react";
+import { Package, RefreshCw, Pencil, Check, X } from "lucide-react";
 
 interface ProductStock {
   productId: number;
@@ -29,6 +29,13 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"product" | "part">("product");
 
+  // 부품명·단위 인라인 수정
+  const [editingPartId, setEditingPartId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editError, setEditError] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
   const fetchData = () => {
     setLoading(true);
     Promise.all([
@@ -54,6 +61,47 @@ export default function InventoryPage() {
   );
 
   const partsWithStock = partStocks.filter((s) => s.quantity > 0);
+
+  const startPartEdit = (s: PartStock) => {
+    setEditingPartId(s.partId);
+    setEditName(s.part.name);
+    setEditUnit(s.part.unit);
+    setEditError("");
+  };
+
+  const cancelPartEdit = () => {
+    setEditingPartId(null);
+    setEditName("");
+    setEditUnit("");
+    setEditError("");
+  };
+
+  const savePartEdit = async () => {
+    if (editingPartId == null) return;
+    const name = editName.trim();
+    if (!name) {
+      setEditError("부품명을 입력하세요.");
+      return;
+    }
+    setEditSaving(true);
+    setEditError("");
+    const res = await fetch(`/api/parts/${editingPartId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, unit: editUnit.trim() || "EA" }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setEditError(typeof data.error === "string" ? data.error : "수정에 실패했습니다.");
+    } else {
+      const id = editingPartId;
+      setPartStocks(prev => prev.map(x =>
+        x.partId === id ? { ...x, part: { name: data.name, unit: data.unit } } : x
+      ));
+      cancelPartEdit();
+    }
+    setEditSaving(false);
+  };
 
   return (
     <div>
@@ -145,25 +193,71 @@ export default function InventoryPage() {
                     <th style={{ ...th, textAlign: "center" }}>단위</th>
                     <th style={{ ...th, textAlign: "center" }}>현재고</th>
                     <th style={{ ...th, textAlign: "center" }}>상태</th>
+                    <th style={{ ...th, textAlign: "center", width: "90px" }}>관리</th>
                   </tr>
                 </thead>
                 <tbody>
                   {partsWithStock.map((s, i) => {
                     const low = s.quantity < 5;
+                    const editing = editingPartId === s.partId;
+                    const rowBg = editing ? "#f0f4ff" : i % 2 === 0 ? "white" : "#fafafa";
                     return (
-                      <tr key={s.partId} style={{ borderBottom: i < partsWithStock.length - 1 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "white" : "#fafafa" }}>
-                        <td style={{ ...td, fontWeight: 500 }}>{s.part.name}</td>
-                        <td style={{ ...td, textAlign: "center", color: "var(--muted)" }}>{s.part.unit}</td>
-                        <td style={{ ...td, textAlign: "center" }}>
-                          <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#e05c5c" : "#2d3748" }}>{s.quantity}</span>
-                        </td>
-                        <td style={{ ...td, textAlign: "center" }}>
-                          <span style={{ padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500,
-                            background: s.quantity === 0 ? "#f7f8fc" : low ? "#fff0f0" : "#f0fff4",
-                            color: s.quantity === 0 ? "#a0aec0" : low ? "#c53030" : "#276749" }}>
-                            {s.quantity === 0 ? "재고 없음" : low ? "부족 주의" : "정상"}
-                          </span>
-                        </td>
+                      <tr key={s.partId} style={{ borderBottom: i < partsWithStock.length - 1 ? "1px solid var(--border)" : "none", background: rowBg }}>
+                        {editing ? (
+                          <>
+                            <td style={td} colSpan={2}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                <input
+                                  value={editName}
+                                  onChange={e => setEditName(e.target.value)}
+                                  placeholder="부품명"
+                                  style={inp}
+                                />
+                                <input
+                                  value={editUnit}
+                                  onChange={e => setEditUnit(e.target.value)}
+                                  placeholder="단위 (예: EA)"
+                                  style={inp}
+                                />
+                                {editError && <span style={{ color: "#c53030", fontSize: "12px" }}>{editError}</span>}
+                              </div>
+                            </td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#e05c5c" : "#2d3748" }}>{s.quantity}</span>
+                            </td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <span style={{ padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500,
+                                background: s.quantity === 0 ? "#f7f8fc" : low ? "#fff0f0" : "#f0fff4",
+                                color: s.quantity === 0 ? "#a0aec0" : low ? "#c53030" : "#276749" }}>
+                                {s.quantity === 0 ? "재고 없음" : low ? "부족 주의" : "정상"}
+                              </span>
+                            </td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                                <button type="button" onClick={savePartEdit} disabled={editSaving} style={actBtn("#d1fae5", "#276749")} title="저장"><Check size={13} /></button>
+                                <button type="button" onClick={cancelPartEdit} disabled={editSaving} style={actBtn("#f1f5f9", "#64748b")} title="취소"><X size={13} /></button>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{ ...td, fontWeight: 500 }}>{s.part.name}</td>
+                            <td style={{ ...td, textAlign: "center", color: "var(--muted)" }}>{s.part.unit}</td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#e05c5c" : "#2d3748" }}>{s.quantity}</span>
+                            </td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <span style={{ padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500,
+                                background: s.quantity === 0 ? "#f7f8fc" : low ? "#fff0f0" : "#f0fff4",
+                                color: s.quantity === 0 ? "#a0aec0" : low ? "#c53030" : "#276749" }}>
+                                {s.quantity === 0 ? "재고 없음" : low ? "부족 주의" : "정상"}
+                              </span>
+                            </td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <button type="button" onClick={() => startPartEdit(s)} style={actBtn("#eef2ff", "#5b6ee8")} title="부품명·단위 수정"><Pencil size={13} /></button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}
@@ -199,3 +293,7 @@ function Legend({ items }: { items: [string, string][] }) {
 
 const th: React.CSSProperties = { padding: "12px 16px", textAlign: "left", fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap", fontSize: "13px" };
 const td: React.CSSProperties = { padding: "12px 16px", verticalAlign: "middle" };
+const inp: React.CSSProperties = { width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid #c7d2fe", fontSize: "13px", outline: "none", background: "white" };
+function actBtn(bg: string, color: string): React.CSSProperties {
+  return { width: "30px", height: "30px", borderRadius: "6px", border: "none", background: bg, color, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" };
+}
