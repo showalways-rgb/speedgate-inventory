@@ -47,6 +47,14 @@ export default function Dashboard() {
     return productStocks.find(s => s.productId === prod.id)?.quantity ?? 0;
   };
 
+  const modelNamesWithStock = modelNames.filter((m) =>
+    VARIANTS.some((v) => (getQty(m, v) ?? 0) > 0)
+  );
+
+  const partsWithStock = parts.filter(
+    (part) => (partStocks.find((s) => s.partId === part.id)?.quantity ?? 0) > 0
+  );
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
@@ -69,6 +77,8 @@ export default function Dashboard() {
             <div style={tableWrap}>
               {modelNames.length === 0 ? (
                 <div style={emptyStyle}>등록된 제품이 없습니다.</div>
+              ) : modelNamesWithStock.length === 0 ? (
+                <div style={emptyStyle}>보유 중인 제품 재고가 없습니다.</div>
               ) : (
                 <table style={tbl}>
                   <thead>
@@ -83,7 +93,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {modelNames.map((model, i) => {
+                    {modelNamesWithStock.map((model, i) => {
                       const qtys = VARIANTS.map(v => getQty(model, v) ?? 0);
                       const total = qtys.reduce((a, b) => a + b, 0);
                       return (
@@ -107,13 +117,17 @@ export default function Dashboard() {
                     <tr style={{ background: "#f0f4ff" }}>
                       <td style={{ ...td, color: "#4338ca", fontWeight: 700, borderTop: "2px solid #c7d2fe" }}>합 계</td>
                       {VARIANTS.map(v => {
-                        const sum = products
-                          .filter(p => p.variant === v)
-                          .reduce((s, p) => s + (productStocks.find(st => st.productId === p.id)?.quantity ?? 0), 0);
+                        const sum = modelNamesWithStock.reduce(
+                          (s, m) => s + (getQty(m, v) ?? 0),
+                          0
+                        );
                         return <td key={v} style={{ ...td, textAlign: "center", color: "#4338ca", fontWeight: 700, borderTop: "2px solid #c7d2fe" }}>{sum}</td>;
                       })}
                       <td style={{ ...td, textAlign: "center", color: "#4338ca", fontWeight: 700, fontSize: "15px", borderTop: "2px solid #c7d2fe", background: "#e8edff" }}>
-                        {productStocks.reduce((s, p) => s + p.quantity, 0)}
+                        {modelNamesWithStock.reduce((s, m) => {
+                          const row = VARIANTS.map(v => getQty(m, v) ?? 0);
+                          return s + row.reduce((a, b) => a + b, 0);
+                        }, 0)}
                       </td>
                     </tr>
                   </tbody>
@@ -128,6 +142,8 @@ export default function Dashboard() {
             <div style={tableWrap}>
               {parts.length === 0 ? (
                 <div style={emptyStyle}>등록된 부품이 없습니다.</div>
+              ) : partsWithStock.length === 0 ? (
+                <div style={emptyStyle}>보유 중인 부품 재고가 없습니다.</div>
               ) : (
                 <table style={tbl}>
                   <thead>
@@ -139,7 +155,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {parts.map((part, i) => {
+                    {partsWithStock.map((part, i) => {
                       const qty = partStocks.find(s => s.partId === part.id)?.quantity ?? 0;
                       const low  = qty > 0 && qty < 5;
                       const zero = qty === 0;

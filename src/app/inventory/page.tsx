@@ -43,11 +43,17 @@ export default function InventoryPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // 제품: modelName별로 그룹핑
-  const models = Array.from(new Set(productStocks.map(s => s.product.modelName))).sort();
+  // 제품: modelName별로 그룹핑 (재고가 하나라도 있는 모델만 표시 — 전부 0이면 화면 비움)
+  const allModels = Array.from(new Set(productStocks.map(s => s.product.modelName))).sort();
 
   const getProductQty = (modelName: string, variant: string) =>
     productStocks.find(s => s.product.modelName === modelName && s.product.variant === variant)?.quantity ?? 0;
+
+  const models = allModels.filter((modelName) =>
+    VARIANTS.some((v) => getProductQty(modelName, v) > 0)
+  );
+
+  const partsWithStock = partStocks.filter((s) => s.quantity > 0);
 
   return (
     <div>
@@ -86,7 +92,9 @@ export default function InventoryPage() {
         /* ── 제품 재고 테이블 ── */
         <div>
           {models.length === 0 ? (
-            <EmptyBox>등록된 제품이 없습니다.</EmptyBox>
+            <EmptyBox>
+              {allModels.length === 0 ? "등록된 제품이 없습니다." : "보유 중인 제품 재고가 없습니다."}
+            </EmptyBox>
           ) : (
             <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflow: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "400px" }}>
@@ -124,8 +132,10 @@ export default function InventoryPage() {
       ) : (
         /* ── 부품 재고 목록 ── */
         <div>
-          {partStocks.length === 0 ? (
-            <EmptyBox>등록된 부품이 없습니다.</EmptyBox>
+          {partsWithStock.length === 0 ? (
+            <EmptyBox>
+              {partStocks.length === 0 ? "등록된 부품이 없습니다." : "보유 중인 부품 재고가 없습니다."}
+            </EmptyBox>
           ) : (
             <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", overflow: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "360px" }}>
@@ -138,10 +148,10 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {partStocks.map((s, i) => {
+                  {partsWithStock.map((s, i) => {
                     const low = s.quantity < 5;
                     return (
-                      <tr key={s.partId} style={{ borderBottom: i < partStocks.length - 1 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "white" : "#fafafa" }}>
+                      <tr key={s.partId} style={{ borderBottom: i < partsWithStock.length - 1 ? "1px solid var(--border)" : "none", background: i % 2 === 0 ? "white" : "#fafafa" }}>
                         <td style={{ ...td, fontWeight: 500 }}>{s.part.name}</td>
                         <td style={{ ...td, textAlign: "center", color: "var(--muted)" }}>{s.part.unit}</td>
                         <td style={{ ...td, textAlign: "center" }}>
