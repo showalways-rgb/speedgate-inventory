@@ -13,7 +13,7 @@ export async function GET(request: Request) {
         ...(productId ? { productId: parseInt(productId) } : {}),
         ...(type ? { type } : {}),
       },
-      include: { product: true },
+      include: { product: true, partTransactions: { include: { part: true } } },
       orderBy: { createdAt: "desc" },
       ...(limit ? { take: parseInt(limit) } : {}),
     });

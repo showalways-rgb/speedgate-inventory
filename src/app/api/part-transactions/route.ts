@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { partId, type, quantity, note, date } = await request.json();
+    const { partId, type, quantity, note, date, productTransactionId } = await request.json();
 
     if (!partId || !type || !quantity) {
       return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         data: {
           partId, type, quantity: qty, note,
           ...(date ? { createdAt: new Date(date) } : {}),
+          ...(productTransactionId ? { productTransactionId } : {}),
         },
         include: { part: true },
       });

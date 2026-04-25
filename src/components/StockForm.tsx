@@ -190,14 +190,15 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       setLoading(false); return;
     }
 
-    // 2. 부품 출고 등록 (출고 시에만)
+    // 2. 부품 출고 등록 (출고 시에만) — 제품 트랜잭션 ID를 함께 전달
     if (isOUT && partItems.length > 0) {
+      const productTxId: number | undefined = data?.id;
       const partResults = await Promise.all(
         partItems.map(item =>
           fetch("/api/part-transactions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ partId: item.partId, type: "OUT", quantity: item.quantity, note: note || null, date }),
+            body: JSON.stringify({ partId: item.partId, type: "OUT", quantity: item.quantity, note: note || null, date, productTransactionId: productTxId }),
           }).then(r => r.json().then(d => ({ ok: r.ok, data: d, item })))
         )
       );

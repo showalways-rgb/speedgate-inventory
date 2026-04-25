@@ -44,22 +44,25 @@ model PartStock {
 
 // 제품 입출고 내역
 model ProductTransaction {
-  id        Int      @id @default(autoincrement())
-  product   Product  @relation(fields: [productId], references: [id])
-  productId Int
-  type      String   // "IN" | "OUT"
-  quantity  Int
-  note      String?
-  createdAt DateTime @default(now())
+  id               Int               @id @default(autoincrement())
+  product          Product           @relation(fields: [productId], references: [id])
+  productId        Int
+  type             String            // "IN" | "OUT"
+  quantity         Int
+  note             String?
+  createdAt        DateTime          @default(now())
+  partTransactions PartTransaction[]
 }
 
 // 부품 입출고 내역
 model PartTransaction {
-  id        Int      @id @default(autoincrement())
-  part      Part     @relation(fields: [partId], references: [id])
-  partId    Int
-  type      String   // "IN" | "OUT"
-  quantity  Int
-  note      String?
-  createdAt DateTime @default(now())
+  id                   Int                  @id @default(autoincrement())
+  part                 Part                 @relation(fields: [partId], references: [id])
+  partId               Int
+  type                 String               // "IN" | "OUT"
+  quantity             Int
+  note                 String?
+  createdAt            DateTime             @default(now())
+  productTransaction   ProductTransaction?  @relation(fields: [productTransactionId], references: [id])
+  productTransactionId Int?
 }

@@ -6,13 +6,14 @@ import { BarChart2, Pencil, RefreshCw, Check, X, Trash2 } from "lucide-react";
 interface Product { id: number; modelName: string; variant: string }
 interface Part    { id: number; name: string; unit: string }
 
-interface ProductTx {
-  id: number; type: string; quantity: number; note: string | null; createdAt: string;
-  product: Product;
-}
 interface PartTx {
   id: number; type: string; quantity: number; note: string | null; createdAt: string;
   part: Part;
+}
+interface ProductTx {
+  id: number; type: string; quantity: number; note: string | null; createdAt: string;
+  product: Product;
+  partTransactions: PartTx[];
 }
 
 interface EditValues { date: string; type: string; quantity: string; note: string }
@@ -223,7 +224,7 @@ export default function StatusPage() {
                     <Th width="110px">모델명</Th>
                     <Th width="100px" center>파생</Th>
                     <Th width="100px" center>수량 (대)</Th>
-                    <Th>현장명</Th>
+                    <Th>현장명 / 사용 부품</Th>
                     <Th width="90px" center>관리</Th>
                   </tr>
                 </thead>
@@ -285,7 +286,23 @@ export default function StatusPage() {
                               color: tx.type === "IN" ? "#276749" : "#c53030" }}>
                               {tx.type === "IN" ? "+" : "−"}{tx.quantity}
                             </td>
-                            <td style={{ ...td, color: tx.note ? "var(--foreground)" : "var(--muted)" }}>{tx.note || "—"}</td>
+                            <td style={td}>
+                              {tx.note && <span style={{ color: "var(--foreground)" }}>{tx.note}</span>}
+                              {!tx.note && tx.partTransactions.length === 0 && <span style={{ color: "var(--muted)" }}>—</span>}
+                              {tx.partTransactions.length > 0 && (
+                                <div style={{ marginTop: tx.note ? "5px" : 0, display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                  {tx.partTransactions.map(pt => (
+                                    <span key={pt.id} style={{
+                                      display: "inline-block", padding: "1px 6px", borderRadius: "4px",
+                                      fontSize: "11px", fontWeight: 500,
+                                      background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
+                                    }}>
+                                      {pt.part.name} ×{pt.quantity}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
                             <td style={{ ...td, textAlign: "center" }}>
                               {deleteConfirm?.type === "product" && deleteConfirm.id === tx.id ? (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
