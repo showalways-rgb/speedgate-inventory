@@ -103,24 +103,30 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
   }, []);
 
   // 이동형 선택 시 부품 자동 추가/제거
+  const [missingAutoParts, setMissingAutoParts] = useState<string[]>([]);
+
   useEffect(() => {
     if (!isOUT) return;
     const qty = parseInt(quantity) || 0;
 
-    if (selectedVariant === "이동형" && qty > 0) {
-      setPartItems(prev => {
-        // 기존 자동 추가 항목 제거 후 재구성
-        const manual = prev.filter(p => !p.auto);
+    if (selectedVariant === "이동형") {
+      const missing = MOVING_AUTO_PARTS.filter(name => !parts.find(p => p.name === name));
+      setMissingAutoParts(missing);
+
+      if (qty > 0) {
         const autoItems: PartItem[] = MOVING_AUTO_PARTS.flatMap(name => {
           const part = parts.find(p => p.name === name);
           if (!part) return [];
           const stock = partStocks.find(s => s.partId === part.id)?.quantity ?? 0;
           return [{ partId: part.id, name: part.name, unit: part.unit, quantity: qty, currentStock: stock, auto: true }];
         });
-        return [...autoItems, ...manual];
-      });
+        setPartItems(prev => {
+          const manual = prev.filter(p => !p.auto);
+          return [...autoItems, ...manual];
+        });
+      }
     } else {
-      // 이동형 아닌 경우 자동 추가 항목만 제거
+      setMissingAutoParts([]);
       setPartItems(prev => prev.filter(p => !p.auto));
     }
   }, [selectedVariant, quantity, parts, partStocks, isOUT]);
@@ -270,6 +276,15 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
         <input type="text" value={note} onChange={e => setNote(e.target.value)}
           placeholder="현장명을 입력하세요" style={inputSt} />
       </Field>
+
+      {/* 이동형 미등록 부품 경고 */}
+      {isOUT && selectedVariant === "이동형" && missingAutoParts.length > 0 && (
+        <div style={{ padding: "11px 14px", borderRadius: "8px", fontSize: "13px", background: "#fff7ed", border: "1px solid #fed7aa", color: "#9a3412" }}>
+          ⚠ 아래 부품이 설정에 등록되어 있지 않아 자동 추가되지 않습니다:<br />
+          <strong>{missingAutoParts.join(", ")}</strong><br />
+          <span style={{ fontSize: "12px" }}>설정 → 부품 관리에서 먼저 등록해주세요.</span>
+        </div>
+      )}
 
       {/* ── 부품 추가 (출고 전용) ── */}
       {isOUT && (
