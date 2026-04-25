@@ -90,16 +90,19 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
   const isOUT = type === "OUT";
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/products").then(r => r.json()),
-      fetch("/api/models").then(r => r.json()),
-      fetch("/api/product-stock").then(r => r.json()),
-      fetch("/api/parts").then(r => r.json()),
-      fetch("/api/part-stock").then(r => r.json()),
-    ]).then(([p, m, s, pa, ps]) => {
-      setProducts(p); setModelNames(m); setProductStocks(s);
-      setParts(pa); setPartStocks(ps);
-    });
+    // 누락된 파생모델(이동형 등) 자동 보완 후 데이터 로드
+    fetch("/api/ensure-variants", { method: "POST" }).then(() =>
+      Promise.all([
+        fetch("/api/products").then(r => r.json()),
+        fetch("/api/models").then(r => r.json()),
+        fetch("/api/product-stock").then(r => r.json()),
+        fetch("/api/parts").then(r => r.json()),
+        fetch("/api/part-stock").then(r => r.json()),
+      ]).then(([p, m, s, pa, ps]) => {
+        setProducts(p); setModelNames(m); setProductStocks(s);
+        setParts(pa); setPartStocks(ps);
+      })
+    );
   }, []);
 
   // 이동형 선택 시 부품 자동 추가/제거
@@ -167,7 +170,11 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct || !quantity) return;
+    if (!quantity) return;
+    if (!selectedProduct) {
+      setMessage({ ok: false, text: "선택한 모델/파생모델을 찾을 수 없습니다. 페이지를 새로고침 해주세요." });
+      return;
+    }
     setLoading(true); setMessage(null);
 
     // 1. 제품 입출고 등록
