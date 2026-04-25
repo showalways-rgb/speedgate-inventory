@@ -21,13 +21,16 @@ interface EditValues { date: string; type: string; quantity: string; note: strin
 const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 
 function toDateInput(iso: string) {
-  return new Date(iso).toISOString().slice(0, 10);
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
 }
 
 export default function StatusPage() {
   const [products, setProducts]   = useState<Product[]>([]);
   const [productTxs, setProductTxs] = useState<ProductTx[]>([]);
   const [loading,    setLoading]    = useState(true);
+  const [listError,  setListError]  = useState<string | null>(null);
 
   // 행 편집 상태
   const [editingId,     setEditingId]     = useState<{ type: "product"; id: number } | null>(null);
@@ -46,14 +49,29 @@ export default function StatusPage() {
 
   const fetchAll = () => {
     setLoading(true);
+    setListError(null);
     Promise.all([
-      fetch("/api/products").then(r => r.json()),
-      fetch("/api/product-transactions").then(r => r.json()),
-    ]).then(([pr, ptx]) => {
-      setProducts(pr);
-      setProductTxs(ptx);
-      setLoading(false);
-    });
+      fetch("/api/products").then(async r => ({ ok: r.ok, body: await r.json() })),
+      fetch("/api/product-transactions").then(async r => ({ ok: r.ok, body: await r.json() })),
+    ])
+      .then(([prRes, ptxRes]) => {
+        const pr = prRes.ok && Array.isArray(prRes.body) ? prRes.body : [];
+        const ptx = ptxRes.ok && Array.isArray(ptxRes.body) ? ptxRes.body : [];
+        setProducts(pr);
+        setProductTxs(ptx);
+        if (!ptxRes.ok) {
+          const msg = typeof ptxRes.body?.error === "string" ? ptxRes.body.error : "제품 거래 목록을 불러오지 못했습니다.";
+          setListError(msg);
+        } else if (!Array.isArray(ptxRes.body)) {
+          setListError("서버 응답 형식이 올바르지 않습니다.");
+        }
+      })
+      .catch(() => {
+        setProducts([]);
+        setProductTxs([]);
+        setListError("네트워크 오류로 목록을 불러오지 못했습니다.");
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchAll(); }, []);
@@ -61,6 +79,7 @@ export default function StatusPage() {
   const modelNames = [...new Set(products.map(p => p.modelName))].sort();
 
   const filteredProductTxs = productTxs.filter(tx => {
+    if (!tx?.product) return false;
     if (filterModel   !== "all" && tx.product.modelName !== filterModel)   return false;
     if (filterVariant !== "all" && tx.product.variant   !== filterVariant) return false;
     if (filterType    !== "all" && tx.type              !== filterType)     return false;
@@ -72,11 +91,14 @@ export default function StatusPage() {
   const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
   const displayUsedParts = (tx: ProductTx) => {
-    const u = tx.usedParts?.trim();
+    const u = typeof tx.usedParts === "string" ? tx.usedParts.trim() : "";
     if (u) return u;
-    const pts = tx.partTransactions ?? [];
+    const pts = Array.isArray(tx.partTransactions) ? tx.partTransactions : [];
     if (pts.length === 0) return "";
-    return pts.map(pt => `${pt.part.name} ×${pt.quantity}`).join(", ");
+    return pts
+      .filter((pt): pt is PartTx & { part: Part } => Boolean(pt?.part?.name))
+      .map(pt => `${pt.part.name} ×${pt.quantity}`)
+      .join(", ");
   };
 
   const startEdit = (txType: "product", tx: ProductTx) => {
@@ -86,7 +108,7 @@ export default function StatusPage() {
       type: tx.type,
       quantity: String(tx.quantity),
       note: tx.note ?? "",
-      usedParts: tx.usedParts ?? "",
+      usedParts: typeof tx.usedParts === "string" ? tx.usedParts : "",
     });
     setEditError("");
   };
@@ -167,6 +189,17 @@ export default function StatusPage() {
       ) : (
         /* ── 제품 입출고 ── */
         <div>
+          {listError && (
+            <div style={{ marginBottom: "16px", padding: "12px 14px", borderRadius: "8px", background: "#fff5f5", border: "1px solid #fecaca", color: "#9b1c1c", fontSize: "14px" }}>
+              {listError}
+              <span style={{ display: "block", marginTop: "6px", fontSize: "12px", color: "#7f1d1d" }}>
+                DB에 <code style={{ background: "#fee2e2", padding: "0 4px", borderRadius: "4px" }}>usedParts</code> 컬럼이 없으면 이 오류가 납니다. Supabase SQL 편집기에서 한 번 실행해 주세요:{" "}
+                <code style={{ display: "block", marginTop: "6px", padding: "8px", background: "#fff", borderRadius: "6px", fontSize: "11px", wordBreak: "break-all" }}>
+                  {`ALTER TABLE "ProductTransaction" ADD COLUMN IF NOT EXISTS "usedParts" TEXT;`}
+                </code>
+              </span>
+            </div>
+          )}
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px", padding: "14px 16px", background: "white", border: "1px solid var(--border)", borderRadius: "10px" }}>
             <select value={filterModel}   onChange={e => setFilterModel(e.target.value)}   style={sel}>
               <option value="all">전체 모델</option>
