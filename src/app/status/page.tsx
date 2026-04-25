@@ -249,7 +249,11 @@ export default function StatusPage() {
                                 <option value="OUT">출고</option>
                               </select>
                             </td>
-                            <td style={{ ...td, fontWeight: 600, color: "var(--muted)" }}>{tx.product.modelName}</td>
+                            <td style={{ ...td, fontWeight: 600, color: "var(--muted)" }}>
+                              {tx.product.variant === "이동형"
+                                ? `${tx.product.modelName}M`
+                                : tx.product.modelName}
+                            </td>
                             <td style={{ ...td, textAlign: "center" }}><VariantBadge variant={tx.product.variant} /></td>
                             <td style={{ ...td, textAlign: "center" }}>
                               <input type="number" min="1" value={editValues.quantity}
@@ -280,28 +284,35 @@ export default function StatusPage() {
                           <>
                             <td style={td}>{fmt(tx.createdAt)}</td>
                             <td style={{ ...td, textAlign: "center" }}><TypeBadge type={tx.type} /></td>
-                            <td style={{ ...td, fontWeight: 600 }}>{tx.product.modelName}</td>
+                            <td style={{ ...td, fontWeight: 600 }}>
+                              {tx.product.variant === "이동형"
+                                ? `${tx.product.modelName}M`
+                                : tx.product.modelName}
+                            </td>
                             <td style={{ ...td, textAlign: "center" }}><VariantBadge variant={tx.product.variant} /></td>
                             <td style={{ ...td, textAlign: "center", fontWeight: 700, fontSize: "15px",
                               color: tx.type === "IN" ? "#276749" : "#c53030" }}>
                               {tx.type === "IN" ? "+" : "−"}{tx.quantity}
                             </td>
                             <td style={td}>
-                              {tx.note && <span style={{ color: "var(--foreground)" }}>{tx.note}</span>}
-                              {!tx.note && tx.partTransactions.length === 0 && <span style={{ color: "var(--muted)" }}>—</span>}
-                              {tx.partTransactions.length > 0 && (
-                                <div style={{ marginTop: tx.note ? "5px" : 0, display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                                  {tx.partTransactions.map(pt => (
-                                    <span key={pt.id} style={{
-                                      display: "inline-block", padding: "1px 6px", borderRadius: "4px",
-                                      fontSize: "11px", fontWeight: 500,
-                                      background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
-                                    }}>
-                                      {pt.part.name} ×{pt.quantity}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                                <span style={{ color: tx.note ? "var(--foreground)" : "var(--muted)" }}>
+                                  {tx.note || "—"}
+                                </span>
+                                {(tx.partTransactions ?? []).length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                    {(tx.partTransactions ?? []).map(pt => (
+                                      <span key={pt.id} style={{
+                                        display: "inline-block", padding: "2px 7px", borderRadius: "4px",
+                                        fontSize: "11px", fontWeight: 500,
+                                        background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
+                                      }}>
+                                        {pt.part.name} ×{pt.quantity}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
                               {deleteConfirm?.type === "product" && deleteConfirm.id === tx.id ? (
