@@ -170,18 +170,28 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quantity) return;
-    if (!selectedProduct) {
-      setMessage({ ok: false, text: "선택한 모델/파생모델을 찾을 수 없습니다. 페이지를 새로고침 해주세요." });
+    if (!quantity || !selectedModel || !selectedVariant) return;
+
+    // 클라이언트 상태에서 제품을 못 찾으면 서버에서 재조회
+    let product = selectedProduct;
+    if (!product) {
+      await fetch("/api/ensure-variants", { method: "POST" });
+      const freshProducts: Product[] = await fetch("/api/products").then(r => r.json());
+      setProducts(freshProducts);
+      product = freshProducts.find(p => p.modelName === selectedModel && p.variant === selectedVariant) ?? null;
+    }
+    if (!product) {
+      setMessage({ ok: false, text: "선택한 모델/파생모델을 찾을 수 없습니다. 설정에서 모델을 확인해주세요." });
       return;
     }
+
     setLoading(true); setMessage(null);
 
     // 1. 제품 입출고 등록
     const res = await fetch("/api/product-transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: selectedProduct.id, type, quantity: parseInt(quantity), note: note || null, date }),
+      body: JSON.stringify({ productId: product.id, type, quantity: parseInt(quantity), note: note || null, date }),
     });
     const data = await res.json();
 
@@ -213,16 +223,16 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
 
     const delta = parseInt(quantity);
     setProductStocks(prev => {
-      const exists = prev.find(s => s.productId === selectedProduct.id);
+      const exists = prev.find(s => s.productId === product.id);
       const newQty = type === "IN" ? currentStock + delta : currentStock - delta;
-      if (exists) return prev.map(s => s.productId === selectedProduct.id ? { ...s, quantity: newQty } : s);
-      return [...prev, { productId: selectedProduct.id, quantity: newQty, product: selectedProduct }];
+      if (exists) return prev.map(s => s.productId === product.id ? { ...s, quantity: newQty } : s);
+      return [...prev, { productId: product.id, quantity: newQty, product }];
     });
 
     const partSummary = partItems.length > 0
       ? ` | 부품 ${partItems.length}종 함께 출고`
       : "";
-    setMessage({ ok: true, text: `${type === "IN" ? "입고" : "출고"} 완료: ${selectedProduct.modelName} ${selectedProduct.variant} ${delta}대 (${date})${partSummary}` });
+    setMessage({ ok: true, text: `${type === "IN" ? "입고" : "출고"} 완료: ${product.modelName} ${product.variant} ${delta}대 (${date})${partSummary}` });
     setQuantity(""); setNote(""); setPartItems([]);
     setLoading(false);
   };
