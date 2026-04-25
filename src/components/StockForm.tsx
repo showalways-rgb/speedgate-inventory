@@ -11,8 +11,8 @@ interface PartStock { partId: number; quantity: number; part: Part }
 // 출고 시 추가할 부품 항목
 interface PartItem { partId: number; name: string; unit: string; quantity: number; currentStock: number; auto?: boolean }
 
-// 이동형 선택 시 자동 추가할 부품 이름 목록
-const MOVING_AUTO_PARTS = ["이동형_베이스", "이동형_상판", "이동형_보강_4Set"];
+// 이동형 선택 시 자동 추가할 부품 접미사 목록 (앞에 모델명이 붙음)
+const MOVING_AUTO_SUFFIXES = ["이동형_베이스", "이동형_상판", "이동형_보강_4Set"];
 
 interface Props { type: "IN" | "OUT" }
 
@@ -109,12 +109,14 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
     if (!isOUT) return;
     const qty = parseInt(quantity) || 0;
 
-    if (selectedVariant === "이동형") {
-      const missing = MOVING_AUTO_PARTS.filter(name => !parts.find(p => p.name === name));
+    if (selectedVariant === "이동형" && selectedModel) {
+      // 모델명_접미사 형태로 부품명 생성
+      const autoPartNames = MOVING_AUTO_SUFFIXES.map(suffix => `${selectedModel}_${suffix}`);
+      const missing = autoPartNames.filter(name => !parts.find(p => p.name === name));
       setMissingAutoParts(missing);
 
       if (qty > 0) {
-        const autoItems: PartItem[] = MOVING_AUTO_PARTS.flatMap(name => {
+        const autoItems: PartItem[] = autoPartNames.flatMap(name => {
           const part = parts.find(p => p.name === name);
           if (!part) return [];
           const stock = partStocks.find(s => s.partId === part.id)?.quantity ?? 0;
@@ -129,7 +131,7 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       setMissingAutoParts([]);
       setPartItems(prev => prev.filter(p => !p.auto));
     }
-  }, [selectedVariant, quantity, parts, partStocks, isOUT]);
+  }, [selectedVariant, selectedModel, quantity, parts, partStocks, isOUT]);
 
   const selectedProduct = products.find(p => p.modelName === selectedModel && p.variant === selectedVariant);
   const currentStock = productStocks.find(s => s.productId === selectedProduct?.id)?.quantity ?? 0;
@@ -278,9 +280,9 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       </Field>
 
       {/* 이동형 미등록 부품 경고 */}
-      {isOUT && selectedVariant === "이동형" && missingAutoParts.length > 0 && (
+      {isOUT && selectedVariant === "이동형" && selectedModel && missingAutoParts.length > 0 && (
         <div style={{ padding: "11px 14px", borderRadius: "8px", fontSize: "13px", background: "#fff7ed", border: "1px solid #fed7aa", color: "#9a3412" }}>
-          ⚠ 아래 부품이 설정에 등록되어 있지 않아 자동 추가되지 않습니다:<br />
+          ⚠ 아래 부품이 등록되어 있지 않아 자동 추가되지 않습니다:<br />
           <strong>{missingAutoParts.join(", ")}</strong><br />
           <span style={{ fontSize: "12px" }}>설정 → 부품 관리에서 먼저 등록해주세요.</span>
         </div>
