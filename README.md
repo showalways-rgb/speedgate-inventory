@@ -357,8 +357,9 @@ DIRECT_URL="postgresql://postgres.[project-ref]:[password]@aws-1-ap-northeast-1.
 
 ### 8-3. 배포 후 확인
 
-- 빌드 시 `prisma db push` → `seed` → `next build` 순서로 자동 실행
-- GitHub에 push할 때마다 Vercel이 자동으로 재배포
+- Vercel 빌드 시 **`prisma generate` → `prisma db push` → `next build`** 순서로 실행됩니다. (`db push`로 스키마 변경이 프로덕션 DB에 반영됩니다.)
+- 초기 시드가 필요하면 배포 후 한 번 `npm run db:seed`를 로컬에서 실행하거나, Supabase SQL로 데이터를 넣습니다.
+- GitHub에 push할 때마다 Vercel이 자동으로 재배포됩니다.
 
 ---
 
