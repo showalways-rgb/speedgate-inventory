@@ -11,8 +11,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       // 재고 원복
       const effect = oldTx.type === "IN" ? -oldTx.quantity : oldTx.quantity;
       const stock = await tx.productStock.findUnique({ where: { productId: oldTx.productId } });
-      const updatedQty = (stock?.quantity ?? 0) + effect;
-      if (updatedQty < 0) throw new Error(`재고 부족: 삭제 후 재고가 ${updatedQty}대가 됩니다.`);
+      const updatedQty = Math.max(0, (stock?.quantity ?? 0) + effect);
 
       await tx.productStock.upsert({
         where: { productId: oldTx.productId },
