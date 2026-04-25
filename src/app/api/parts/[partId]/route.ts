@@ -32,16 +32,11 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   try {
     const { partId } = await params;
     const id = parseInt(partId);
-
-    const txCount = await prisma.partTransaction.count({ where: { partId: id } });
-    if (txCount > 0) {
-      return NextResponse.json(
-        { error: `이 부품에 ${txCount}건의 거래 내역이 있어 삭제할 수 없습니다.` },
-        { status: 409 }
-      );
-    }
-    await prisma.partStock.deleteMany({ where: { partId: id } });
-    await prisma.part.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.partTransaction.deleteMany({ where: { partId: id } });
+      await tx.partStock.deleteMany({ where: { partId: id } });
+      await tx.part.delete({ where: { id } });
+    });
     return NextResponse.json({ deleted: id });
   } catch {
     return NextResponse.json({ error: "부품 삭제 실패" }, { status: 500 });

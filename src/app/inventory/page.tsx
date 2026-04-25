@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, RefreshCw, Pencil, Check, X } from "lucide-react";
+import { Package, RefreshCw, Pencil, Check, X, Trash2 } from "lucide-react";
 
 interface ProductStock {
   productId: number;
@@ -33,8 +33,10 @@ export default function InventoryPage() {
   const [editingPartId, setEditingPartId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [editUnit, setEditUnit] = useState("");
+  const [editQty, setEditQty] = useState("");
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [deletingPartId, setDeletingPartId] = useState<number | null>(null);
 
   const fetchData = () => {
     setLoading(true);
@@ -66,6 +68,7 @@ export default function InventoryPage() {
     setEditingPartId(s.partId);
     setEditName(s.part.name);
     setEditUnit(s.part.unit);
+    setEditQty(String(s.quantity));
     setEditError("");
   };
 
@@ -73,34 +76,85 @@ export default function InventoryPage() {
     setEditingPartId(null);
     setEditName("");
     setEditUnit("");
+    setEditQty("");
     setEditError("");
   };
 
   const savePartEdit = async () => {
     if (editingPartId == null) return;
     const name = editName.trim();
+    const qty = Number(editQty);
     if (!name) {
       setEditError("부품명을 입력하세요.");
       return;
     }
+    if (!Number.isInteger(qty) || qty < 0) {
+      setEditError("수량은 0 이상의 정수로 입력하세요.");
+      return;
+    }
+    const original = partStocks.find(x => x.partId === editingPartId);
+    if (!original) {
+      setEditError("대상을 찾을 수 없습니다.");
+      return;
+    }
     setEditSaving(true);
     setEditError("");
-    const res = await fetch(`/api/parts/${editingPartId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, unit: editUnit.trim() || "EA" }),
-    });
+
+    const unit = editUnit.trim() || "EA";
+    const needMetaUpdate = name !== original.part.name || unit !== original.part.unit;
+    if (needMetaUpdate) {
+      const res = await fetch(`/api/parts/${editingPartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, unit }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditSaving(false);
+        setEditError(typeof data.error === "string" ? data.error : "수정에 실패했습니다.");
+        return;
+      }
+    }
+
+    const diff = qty - original.quantity;
+    if (diff !== 0) {
+      const res = await fetch("/api/part-transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partId: editingPartId,
+          type: diff > 0 ? "IN" : "OUT",
+          quantity: Math.abs(diff),
+          note: "현재고 화면 수동 조정",
+          date: new Date().toISOString().slice(0, 10),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditSaving(false);
+        setEditError(typeof data.error === "string" ? data.error : "수량 조정에 실패했습니다.");
+        return;
+      }
+    }
+
+    fetchData();
+    cancelPartEdit();
+    setEditSaving(false);
+  };
+
+  const deletePart = async (partId: number) => {
+    if (!window.confirm("이 부품을 삭제할까요? 관련 부품 입출고 내역도 함께 삭제됩니다.")) return;
+    setDeletingPartId(partId);
+    const res = await fetch(`/api/parts/${partId}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setEditError(typeof data.error === "string" ? data.error : "수정에 실패했습니다.");
-    } else {
-      const id = editingPartId;
-      setPartStocks(prev => prev.map(x =>
-        x.partId === id ? { ...x, part: { name: data.name, unit: data.unit } } : x
-      ));
-      cancelPartEdit();
+      window.alert(typeof data.error === "string" ? data.error : "삭제에 실패했습니다.");
+      setDeletingPartId(null);
+      return;
     }
-    setEditSaving(false);
+    setPartStocks(prev => prev.filter(x => x.partId !== partId));
+    if (editingPartId === partId) cancelPartEdit();
+    setDeletingPartId(null);
   };
 
   return (
@@ -205,7 +259,7 @@ export default function InventoryPage() {
                       <tr key={s.partId} style={{ borderBottom: i < partsWithStock.length - 1 ? "1px solid var(--border)" : "none", background: rowBg }}>
                         {editing ? (
                           <>
-                            <td style={td} colSpan={2}>
+                            <td style={td}>
                               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                                 <input
                                   value={editName}
@@ -223,7 +277,13 @@ export default function InventoryPage() {
                               </div>
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
-                              <span style={{ fontWeight: 700, fontSize: "16px", color: s.quantity === 0 ? "#cbd5e1" : low ? "#e05c5c" : "#2d3748" }}>{s.quantity}</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={editQty}
+                                onChange={e => setEditQty(e.target.value)}
+                                style={{ ...inp, width: "86px", textAlign: "center", margin: "0 auto" }}
+                              />
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
                               <span style={{ padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500,
@@ -254,7 +314,10 @@ export default function InventoryPage() {
                               </span>
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
-                              <button type="button" onClick={() => startPartEdit(s)} style={actBtn("#eef2ff", "#5b6ee8")} title="부품명·단위 수정"><Pencil size={13} /></button>
+                              <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                                <button type="button" onClick={() => startPartEdit(s)} style={actBtn("#eef2ff", "#5b6ee8")} title="부품명·단위·수량 수정"><Pencil size={13} /></button>
+                                <button type="button" onClick={() => deletePart(s.partId)} disabled={deletingPartId === s.partId} style={actBtn("#fff0f0", "#e05c5c")} title="삭제"><Trash2 size={13} /></button>
+                              </div>
                             </td>
                           </>
                         )}
