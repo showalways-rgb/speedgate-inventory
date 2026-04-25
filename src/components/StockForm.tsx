@@ -178,7 +178,7 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       await fetch("/api/ensure-variants", { method: "POST" });
       const freshProducts: Product[] = await fetch("/api/products").then(r => r.json());
       setProducts(freshProducts);
-      product = freshProducts.find(p => p.modelName === selectedModel && p.variant === selectedVariant) ?? null;
+      product = freshProducts.find(p => p.modelName === selectedModel && p.variant === selectedVariant);
     }
     if (!product) {
       setMessage({ ok: false, text: "선택한 모델/파생모델을 찾을 수 없습니다. 설정에서 모델을 확인해주세요." });

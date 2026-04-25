@@ -54,14 +54,25 @@ export async function POST(request: Request) {
         update: { quantity: newQty },
       });
 
-      return tx.partTransaction.create({
-        data: {
-          partId, type, quantity: qty, note,
-          ...(date ? { createdAt: new Date(date) } : {}),
-          ...(productTransactionId ? { productTransactionId } : {}),
-        },
-        include: { part: true },
-      });
+      try {
+        return await tx.partTransaction.create({
+          data: {
+            partId, type, quantity: qty, note,
+            ...(date ? { createdAt: new Date(date) } : {}),
+            ...(productTransactionId ? { productTransactionId } : {}),
+          },
+          include: { part: true },
+        });
+      } catch {
+        // 구버전 DB(관계 컬럼 미반영)에서는 연결 없이도 부품 출고가 진행되도록 폴백
+        return tx.partTransaction.create({
+          data: {
+            partId, type, quantity: qty, note,
+            ...(date ? { createdAt: new Date(date) } : {}),
+          },
+          include: { part: true },
+        });
+      }
     });
 
     return NextResponse.json(result, { status: 201 });

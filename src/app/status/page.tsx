@@ -30,13 +30,13 @@ export default function StatusPage() {
   const [loading,    setLoading]    = useState(true);
 
   // 행 편집 상태
-  const [editingId,     setEditingId]     = useState<{ type: "product" | "part"; id: number } | null>(null);
+  const [editingId,     setEditingId]     = useState<{ type: "product"; id: number } | null>(null);
   const [editValues,    setEditValues]    = useState<EditValues>({ date: "", type: "IN", quantity: "", note: "" });
   const [editError,     setEditError]     = useState("");
   const [editSaving,    setEditSaving]    = useState(false);
 
   // 삭제 확인 상태
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "product" | "part"; id: number } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "product"; id: number } | null>(null);
   const [deleteError,   setDeleteError]   = useState("");
 
   // 필터 상태
@@ -71,7 +71,7 @@ export default function StatusPage() {
   const totalOut = (txs: { type: string; quantity: number }[]) => txs.filter(t => t.type === "OUT").reduce((s, t) => s + t.quantity, 0);
   const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
-  const startEdit = (txType: "product" | "part", tx: ProductTx | PartTx) => {
+  const startEdit = (txType: "product", tx: ProductTx) => {
     setEditingId({ type: txType, id: tx.id });
     setEditValues({
       date: toDateInput(tx.createdAt),
@@ -87,9 +87,7 @@ export default function StatusPage() {
   const saveEdit = async () => {
     if (!editingId) return;
     setEditSaving(true); setEditError("");
-    const url = editingId.type === "product"
-      ? `/api/product-transactions/${editingId.id}`
-      : `/api/part-transactions/${editingId.id}`;
+    const url = `/api/product-transactions/${editingId.id}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -106,18 +104,16 @@ export default function StatusPage() {
     } else {
       if (editingId.type === "product") {
         setProductTxs(prev => prev.map(tx => tx.id === editingId.id ? { ...tx, ...data } : tx));
-      } else {
-        setPartTxs(prev => prev.map(tx => tx.id === editingId.id ? { ...tx, ...data } : tx));
       }
       setEditingId(null);
     }
     setEditSaving(false);
   };
 
-  const isEditingRow = (txType: "product" | "part", id: number) =>
+  const isEditingRow = (txType: "product", id: number) =>
     editingId?.type === txType && editingId.id === id;
 
-  const confirmDelete = (txType: "product" | "part", id: number) => {
+  const confirmDelete = (txType: "product", id: number) => {
     setDeleteConfirm({ type: txType, id });
     setDeleteError("");
     setEditingId(null);
@@ -125,9 +121,7 @@ export default function StatusPage() {
 
   const executeDelete = async () => {
     if (!deleteConfirm) return;
-    const url = deleteConfirm.type === "product"
-      ? `/api/product-transactions/${deleteConfirm.id}`
-      : `/api/part-transactions/${deleteConfirm.id}`;
+    const url = `/api/product-transactions/${deleteConfirm.id}`;
     const res = await fetch(url, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
@@ -135,8 +129,6 @@ export default function StatusPage() {
     } else {
       if (deleteConfirm.type === "product") {
         setProductTxs(prev => prev.filter(tx => tx.id !== deleteConfirm.id));
-      } else {
-        setPartTxs(prev => prev.filter(tx => tx.id !== deleteConfirm.id));
       }
       setDeleteConfirm(null);
     }

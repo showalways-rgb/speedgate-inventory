@@ -8,18 +8,43 @@ export async function GET(request: Request) {
   const limit = searchParams.get("limit");
 
   try {
+    const where = {
+      ...(productId ? { productId: parseInt(productId) } : {}),
+      ...(type ? { type } : {}),
+    };
+    const paging = {
+      ...(limit ? { take: parseInt(limit) } : {}),
+    };
+
     const transactions = await prisma.productTransaction.findMany({
-      where: {
-        ...(productId ? { productId: parseInt(productId) } : {}),
-        ...(type ? { type } : {}),
-      },
+      where,
       include: { product: true, partTransactions: { include: { part: true } } },
       orderBy: { createdAt: "desc" },
-      ...(limit ? { take: parseInt(limit) } : {}),
+      ...paging,
     });
     return NextResponse.json(transactions);
   } catch {
-    return NextResponse.json({ error: "제품 거래 조회 실패" }, { status: 500 });
+    // 구버전 DB(관계 컬럼 미반영)에서도 제품 현황은 조회되도록 폴백
+    try {
+      const where = {
+        ...(productId ? { productId: parseInt(productId) } : {}),
+        ...(type ? { type } : {}),
+      };
+      const paging = {
+        ...(limit ? { take: parseInt(limit) } : {}),
+      };
+      const legacyTransactions = await prisma.productTransaction.findMany({
+        where,
+        include: { product: true },
+        orderBy: { createdAt: "desc" },
+        ...paging,
+      });
+      return NextResponse.json(
+        legacyTransactions.map((tx) => ({ ...tx, partTransactions: [] }))
+      );
+    } catch {
+      return NextResponse.json({ error: "제품 거래 조회 실패" }, { status: 500 });
+    }
   }
 }
 
