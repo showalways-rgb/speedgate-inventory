@@ -11,12 +11,12 @@ interface PartTx {
   part: Part;
 }
 interface ProductTx {
-  id: number; type: string; quantity: number; note: string | null; createdAt: string;
+  id: number; type: string; quantity: number; note: string | null; usedParts: string | null; createdAt: string;
   product: Product;
   partTransactions: PartTx[];
 }
 
-interface EditValues { date: string; type: string; quantity: string; note: string }
+interface EditValues { date: string; type: string; quantity: string; note: string; usedParts: string }
 
 const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 
@@ -31,7 +31,7 @@ export default function StatusPage() {
 
   // 행 편집 상태
   const [editingId,     setEditingId]     = useState<{ type: "product"; id: number } | null>(null);
-  const [editValues,    setEditValues]    = useState<EditValues>({ date: "", type: "IN", quantity: "", note: "" });
+  const [editValues,    setEditValues]    = useState<EditValues>({ date: "", type: "IN", quantity: "", note: "", usedParts: "" });
   const [editError,     setEditError]     = useState("");
   const [editSaving,    setEditSaving]    = useState(false);
 
@@ -71,6 +71,14 @@ export default function StatusPage() {
   const totalOut = (txs: { type: string; quantity: number }[]) => txs.filter(t => t.type === "OUT").reduce((s, t) => s + t.quantity, 0);
   const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
+  const displayUsedParts = (tx: ProductTx) => {
+    const u = tx.usedParts?.trim();
+    if (u) return u;
+    const pts = tx.partTransactions ?? [];
+    if (pts.length === 0) return "";
+    return pts.map(pt => `${pt.part.name} ×${pt.quantity}`).join(", ");
+  };
+
   const startEdit = (txType: "product", tx: ProductTx) => {
     setEditingId({ type: txType, id: tx.id });
     setEditValues({
@@ -78,6 +86,7 @@ export default function StatusPage() {
       type: tx.type,
       quantity: String(tx.quantity),
       note: tx.note ?? "",
+      usedParts: tx.usedParts ?? "",
     });
     setEditError("");
   };
@@ -95,6 +104,7 @@ export default function StatusPage() {
         type: editValues.type,
         quantity: Number(editValues.quantity),
         note: editValues.note || null,
+        usedParts: editValues.usedParts.trim() || null,
         date: editValues.date,
       }),
     });
@@ -235,14 +245,13 @@ export default function StatusPage() {
                               {editError && <p style={{ color: "#c53030", fontSize: "11px", margin: "4px 0 0" }}>{editError}</p>}
                             </td>
                             <td style={td}>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                                {(tx.partTransactions ?? []).map(pt => (
-                                  <span key={pt.id} style={{ padding: "2px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: 500, background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}>
-                                    {pt.part.name} ×{pt.quantity}
-                                  </span>
-                                ))}
-                                {(tx.partTransactions ?? []).length === 0 && <span style={{ color: "var(--muted)", fontSize: "12px" }}>—</span>}
-                              </div>
+                              <textarea
+                                value={editValues.usedParts}
+                                onChange={e => setEditValues(v => ({ ...v, usedParts: e.target.value }))}
+                                placeholder="사용 부품 입력"
+                                rows={2}
+                                style={{ ...inpSt, minHeight: "44px", resize: "vertical" }}
+                              />
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
                               <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
@@ -274,19 +283,8 @@ export default function StatusPage() {
                             <td style={{ ...td, color: tx.note ? "var(--foreground)" : "var(--muted)" }}>
                               {tx.note || "—"}
                             </td>
-                            <td style={td}>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                                {(tx.partTransactions ?? []).map(pt => (
-                                  <span key={pt.id} style={{
-                                    display: "inline-block", padding: "2px 7px", borderRadius: "4px",
-                                    fontSize: "11px", fontWeight: 500,
-                                    background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
-                                  }}>
-                                    {pt.part.name} ×{pt.quantity}
-                                  </span>
-                                ))}
-                                {(tx.partTransactions ?? []).length === 0 && <span style={{ color: "var(--muted)" }}>—</span>}
-                              </div>
+                            <td style={{ ...td, whiteSpace: "pre-wrap", color: displayUsedParts(tx) ? "var(--foreground)" : "var(--muted)" }}>
+                              {displayUsedParts(tx) || "—"}
                             </td>
                             <td style={{ ...td, textAlign: "center" }}>
                               {deleteConfirm?.type === "product" && deleteConfirm.id === tx.id ? (

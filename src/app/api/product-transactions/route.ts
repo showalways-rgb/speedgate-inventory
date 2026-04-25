@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { productId, type, quantity, note, date } = await request.json();
+    const { productId, type, quantity, note, date, usedParts } = await request.json();
 
     if (!productId || !type || !quantity) {
       return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
@@ -71,12 +71,14 @@ export async function POST(request: Request) {
         throw new Error(`재고 부족: 현재 재고 ${current}대`);
       }
 
+      const up = typeof usedParts === "string" && usedParts.trim() ? usedParts.trim() : null;
       const created = await tx.productTransaction.create({
         data: {
           productId, type, quantity: qty, note,
+          ...(up != null ? { usedParts: up } : {}),
           ...(date ? { createdAt: new Date(date) } : {}),
         },
-        include: { product: true },
+        include: { product: true, partTransactions: { include: { part: true } } },
       });
 
       await recomputeProductStock(tx, productId);

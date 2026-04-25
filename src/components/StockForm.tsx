@@ -9,10 +9,7 @@ interface ProductStock { productId: number; quantity: number; product: Product }
 interface PartStock { partId: number; quantity: number; part: Part }
 
 // 출고 시 추가할 부품 항목
-interface PartItem { partId: number; name: string; unit: string; quantity: number; currentStock: number; auto?: boolean }
-
-// 이동형 선택 시 자동 추가할 부품 접미사 목록 (앞에 모델명이 붙음)
-const MOVING_AUTO_SUFFIXES = ["이동형_베이스", "이동형_상판", "이동형_보강_4Set"];
+interface PartItem { partId: number; name: string; unit: string; quantity: number; currentStock: number }
 
 interface Props { type: "IN" | "OUT" }
 
@@ -78,6 +75,7 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
   const [selectedVariant, setSelectedVariant] = useState("");
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
+  const [usedParts, setUsedParts] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -104,37 +102,6 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       })
     );
   }, []);
-
-  // 이동형 선택 시 부품 자동 추가/제거
-  const [missingAutoParts, setMissingAutoParts] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!isOUT) return;
-    const qty = parseInt(quantity) || 0;
-
-    if (selectedVariant === "이동형" && selectedModel) {
-      // 모델명_접미사 형태로 부품명 생성
-      const autoPartNames = MOVING_AUTO_SUFFIXES.map(suffix => `${selectedModel}_${suffix}`);
-      const missing = autoPartNames.filter(name => !parts.find(p => p.name === name));
-      setMissingAutoParts(missing);
-
-      if (qty > 0) {
-        const autoItems: PartItem[] = autoPartNames.flatMap(name => {
-          const part = parts.find(p => p.name === name);
-          if (!part) return [];
-          const stock = partStocks.find(s => s.partId === part.id)?.quantity ?? 0;
-          return [{ partId: part.id, name: part.name, unit: part.unit, quantity: qty, currentStock: stock, auto: true }];
-        });
-        setPartItems(prev => {
-          const manual = prev.filter(p => !p.auto);
-          return [...autoItems, ...manual];
-        });
-      }
-    } else {
-      setMissingAutoParts([]);
-      setPartItems(prev => prev.filter(p => !p.auto));
-    }
-  }, [selectedVariant, selectedModel, quantity, parts, partStocks, isOUT]);
 
   const selectedProduct = products.find(p => p.modelName === selectedModel && p.variant === selectedVariant);
   const currentStock = productStocks.find(s => s.productId === selectedProduct?.id)?.quantity ?? 0;
@@ -188,10 +155,18 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
     setLoading(true); setMessage(null);
 
     // 1. 제품 입출고 등록
+    const up = usedParts.trim();
     const res = await fetch("/api/product-transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id, type, quantity: parseInt(quantity), note: note || null, date }),
+      body: JSON.stringify({
+        productId: product.id,
+        type,
+        quantity: parseInt(quantity),
+        note: note || null,
+        date,
+        ...(up ? { usedParts: up } : {}),
+      }),
     });
     const data = await res.json();
 
@@ -233,7 +208,7 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       ? ` | 부품 ${partItems.length}종 함께 출고`
       : "";
     setMessage({ ok: true, text: `${type === "IN" ? "입고" : "출고"} 완료: ${product.modelName} ${product.variant} ${delta}대 (${date})${partSummary}` });
-    setQuantity(""); setNote(""); setPartItems([]);
+    setQuantity(""); setNote(""); setUsedParts(""); setPartItems([]);
     setLoading(false);
   };
 
@@ -297,14 +272,16 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
           placeholder="현장명을 입력하세요" style={inputSt} />
       </Field>
 
-      {/* 이동형 미등록 부품 경고 */}
-      {isOUT && selectedVariant === "이동형" && selectedModel && missingAutoParts.length > 0 && (
-        <div style={{ padding: "11px 14px", borderRadius: "8px", fontSize: "13px", background: "#fff7ed", border: "1px solid #fed7aa", color: "#9a3412" }}>
-          ⚠ 아래 부품이 등록되어 있지 않아 자동 추가되지 않습니다:<br />
-          <strong>{missingAutoParts.join(", ")}</strong><br />
-          <span style={{ fontSize: "12px" }}>설정 → 부품 관리에서 먼저 등록해주세요.</span>
-        </div>
-      )}
+      {/* 사용 부품 (입출고 현황에 표시) */}
+      <Field label="사용 부품 (선택)">
+        <textarea
+          value={usedParts}
+          onChange={e => setUsedParts(e.target.value)}
+          placeholder="사용 부품을 자유롭게 입력하세요"
+          rows={2}
+          style={{ ...inputSt, minHeight: "52px", resize: "vertical" }}
+        />
+      </Field>
 
       {/* ── 부품 추가 (출고 전용) ── */}
       {isOUT && (
@@ -359,13 +336,10 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
                   <div key={item.partId} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     padding: "10px 12px", borderBottom: "1px solid var(--border)",
-                    background: item.auto ? "#fffdf0" : isOver ? "#fff5f5" : "white",
+                    background: isOver ? "#fff5f5" : "white",
                   }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: "13px" }}>{item.name}</span>
-                      {item.auto && (
-                        <span style={{ marginLeft: "6px", fontSize: "10px", background: "#fef9c3", color: "#854d0e", padding: "1px 5px", borderRadius: "3px", fontWeight: 600 }}>자동</span>
-                      )}
                       <span style={{ marginLeft: "8px", fontSize: "12px", color: "var(--muted)" }}>
                         재고 {item.currentStock}{item.unit}
                       </span>
@@ -375,12 +349,10 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
                       <span style={{ fontWeight: 700, fontSize: "14px", color: "#c53030" }}>
                         −{item.quantity}{item.unit}
                       </span>
-                      {!item.auto && (
-                        <button type="button" onClick={() => removePartItem(item.partId)}
-                          style={{ width: "26px", height: "26px", borderRadius: "5px", border: "none", background: "#fff0f0", color: "#e05c5c", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Trash2 size={13} />
-                        </button>
-                      )}
+                      <button type="button" onClick={() => removePartItem(item.partId)}
+                        style={{ width: "26px", height: "26px", borderRadius: "5px", border: "none", background: "#fff0f0", color: "#e05c5c", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 );

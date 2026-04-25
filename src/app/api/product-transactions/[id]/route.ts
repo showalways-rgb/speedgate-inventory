@@ -29,7 +29,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { note, type, quantity, date } = await req.json();
+  const { note, type, quantity, date, usedParts } = await req.json();
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -43,8 +43,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           ...(type !== undefined ? { type } : {}),
           ...(quantity !== undefined ? { quantity: Number(quantity) } : {}),
           ...(date !== undefined ? { createdAt: new Date(date) } : {}),
+          ...(usedParts !== undefined
+            ? { usedParts: typeof usedParts === "string" && usedParts.trim() ? usedParts.trim() : null }
+            : {}),
         },
-        include: { product: true },
+        include: { product: true, partTransactions: { include: { part: true } } },
       });
 
       await recomputeProductStock(tx, updated.productId);

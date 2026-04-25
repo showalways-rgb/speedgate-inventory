@@ -49,6 +49,7 @@ model ProductTransaction {
   type             String            // "IN" | "OUT"
   quantity         Int
   note             String?
+  usedParts        String?           // 사용 부품(자유 입력)
   createdAt        DateTime          @default(now())
   partTransactions PartTransaction[]
 }
