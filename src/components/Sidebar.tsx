@@ -62,12 +62,12 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
-              width: "32px", height: "32px", background: "#eef2ff",
-              borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+              width: "36px", height: "36px", background: "#eef2ff",
+              borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <Package size={18} color="#5b6ee8" />
+              <Package size={20} color="#5b6ee8" />
             </div>
-            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "30px" }}>
+            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "16px", lineHeight: 1.3 }}>
               재고관리 시스템
             </span>
           </div>
