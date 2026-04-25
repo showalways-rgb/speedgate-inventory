@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart2, Pencil, RefreshCw, Check, X } from "lucide-react";
+import { BarChart2, Pencil, RefreshCw, Check, X, Trash2 } from "lucide-react";
 
 interface Product { id: number; modelName: string; variant: string }
 interface Part    { id: number; name: string; unit: string }
@@ -36,6 +36,10 @@ export default function StatusPage() {
   const [editValues,    setEditValues]    = useState<EditValues>({ date: "", type: "IN", quantity: "", note: "" });
   const [editError,     setEditError]     = useState("");
   const [editSaving,    setEditSaving]    = useState(false);
+
+  // 삭제 확인 상태
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "product" | "part"; id: number } | null>(null);
+  const [deleteError,   setDeleteError]   = useState("");
 
   // 필터 상태
   const [filterModel,   setFilterModel]   = useState("all");
@@ -125,6 +129,31 @@ export default function StatusPage() {
   const isEditingRow = (txType: "product" | "part", id: number) =>
     editingId?.type === txType && editingId.id === id;
 
+  const confirmDelete = (txType: "product" | "part", id: number) => {
+    setDeleteConfirm({ type: txType, id });
+    setDeleteError("");
+    setEditingId(null);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteConfirm) return;
+    const url = deleteConfirm.type === "product"
+      ? `/api/product-transactions/${deleteConfirm.id}`
+      : `/api/part-transactions/${deleteConfirm.id}`;
+    const res = await fetch(url, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) {
+      setDeleteError(data.error ?? "삭제 실패");
+    } else {
+      if (deleteConfirm.type === "product") {
+        setProductTxs(prev => prev.filter(tx => tx.id !== deleteConfirm.id));
+      } else {
+        setPartTxs(prev => prev.filter(tx => tx.id !== deleteConfirm.id));
+      }
+      setDeleteConfirm(null);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -195,7 +224,7 @@ export default function StatusPage() {
                     <Th width="100px" center>파생</Th>
                     <Th width="100px" center>수량 (대)</Th>
                     <Th>현장명</Th>
-                    <Th width="60px" center>수정</Th>
+                    <Th width="90px" center>관리</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,10 +287,21 @@ export default function StatusPage() {
                             </td>
                             <td style={{ ...td, color: tx.note ? "var(--foreground)" : "var(--muted)" }}>{tx.note || "—"}</td>
                             <td style={{ ...td, textAlign: "center" }}>
-                              <button onClick={() => startEdit("product", tx)}
-                                style={actionBtn("#eef2ff", "#5b6ee8")} title="수정">
-                                <Pencil size={13} />
-                              </button>
+                              {deleteConfirm?.type === "product" && deleteConfirm.id === tx.id ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
+                                  <span style={{ fontSize: "11px", color: "#c53030", whiteSpace: "nowrap" }}>삭제 확인</span>
+                                  {deleteError && <span style={{ fontSize: "10px", color: "#c53030" }}>{deleteError}</span>}
+                                  <div style={{ display: "flex", gap: "4px" }}>
+                                    <button onClick={executeDelete} style={actionBtn("#fee2e2", "#c53030")} title="삭제 확인"><Check size={13} /></button>
+                                    <button onClick={() => setDeleteConfirm(null)} style={actionBtn("#f1f5f9", "#64748b")} title="취소"><X size={13} /></button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                                  <button onClick={() => startEdit("product", tx)} style={actionBtn("#eef2ff", "#5b6ee8")} title="수정"><Pencil size={13} /></button>
+                                  <button onClick={() => confirmDelete("product", tx.id)} style={actionBtn("#fff0f0", "#e05c5c")} title="삭제"><Trash2 size={13} /></button>
+                                </div>
+                              )}
                             </td>
                           </>
                         )}
@@ -328,7 +368,7 @@ export default function StatusPage() {
                     <Th width="80px" center>단위</Th>
                     <Th width="110px" center>수량</Th>
                     <Th>현장명</Th>
-                    <Th width="60px" center>수정</Th>
+                    <Th width="90px" center>관리</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -391,10 +431,21 @@ export default function StatusPage() {
                             </td>
                             <td style={{ ...td, color: tx.note ? "var(--foreground)" : "var(--muted)" }}>{tx.note || "—"}</td>
                             <td style={{ ...td, textAlign: "center" }}>
-                              <button onClick={() => startEdit("part", tx)}
-                                style={actionBtn("#eef2ff", "#5b6ee8")} title="수정">
-                                <Pencil size={13} />
-                              </button>
+                              {deleteConfirm?.type === "part" && deleteConfirm.id === tx.id ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
+                                  <span style={{ fontSize: "11px", color: "#c53030", whiteSpace: "nowrap" }}>삭제 확인</span>
+                                  {deleteError && <span style={{ fontSize: "10px", color: "#c53030" }}>{deleteError}</span>}
+                                  <div style={{ display: "flex", gap: "4px" }}>
+                                    <button onClick={executeDelete} style={actionBtn("#fee2e2", "#c53030")} title="삭제 확인"><Check size={13} /></button>
+                                    <button onClick={() => setDeleteConfirm(null)} style={actionBtn("#f1f5f9", "#64748b")} title="취소"><X size={13} /></button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                                  <button onClick={() => startEdit("part", tx)} style={actionBtn("#eef2ff", "#5b6ee8")} title="수정"><Pencil size={13} /></button>
+                                  <button onClick={() => confirmDelete("part", tx.id)} style={actionBtn("#fff0f0", "#e05c5c")} title="삭제"><Trash2 size={13} /></button>
+                                </div>
+                              )}
                             </td>
                           </>
                         )}
