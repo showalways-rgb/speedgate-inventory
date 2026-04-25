@@ -9,7 +9,10 @@ interface ProductStock { productId: number; quantity: number; product: Product }
 interface PartStock { partId: number; quantity: number; part: Part }
 
 // 출고 시 추가할 부품 항목
-interface PartItem { partId: number; name: string; unit: string; quantity: number; currentStock: number }
+interface PartItem { partId: number; name: string; unit: string; quantity: number; currentStock: number; auto?: boolean }
+
+// 이동형 선택 시 자동 추가할 부품 이름 목록
+const MOVING_AUTO_PARTS = ["이동형_베이스", "이동형_상판", "이동형_보강_4Set"];
 
 interface Props { type: "IN" | "OUT" }
 
@@ -98,6 +101,29 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
       setParts(pa); setPartStocks(ps);
     });
   }, []);
+
+  // 이동형 선택 시 부품 자동 추가/제거
+  useEffect(() => {
+    if (!isOUT) return;
+    const qty = parseInt(quantity) || 0;
+
+    if (selectedVariant === "이동형" && qty > 0) {
+      setPartItems(prev => {
+        // 기존 자동 추가 항목 제거 후 재구성
+        const manual = prev.filter(p => !p.auto);
+        const autoItems: PartItem[] = MOVING_AUTO_PARTS.flatMap(name => {
+          const part = parts.find(p => p.name === name);
+          if (!part) return [];
+          const stock = partStocks.find(s => s.partId === part.id)?.quantity ?? 0;
+          return [{ partId: part.id, name: part.name, unit: part.unit, quantity: qty, currentStock: stock, auto: true }];
+        });
+        return [...autoItems, ...manual];
+      });
+    } else {
+      // 이동형 아닌 경우 자동 추가 항목만 제거
+      setPartItems(prev => prev.filter(p => !p.auto));
+    }
+  }, [selectedVariant, quantity, parts, partStocks, isOUT]);
 
   const selectedProduct = products.find(p => p.modelName === selectedModel && p.variant === selectedVariant);
   const currentStock = productStocks.find(s => s.productId === selectedProduct?.id)?.quantity ?? 0;
@@ -298,10 +324,13 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
                   <div key={item.partId} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     padding: "10px 12px", borderBottom: "1px solid var(--border)",
-                    background: isOver ? "#fff5f5" : "white",
+                    background: item.auto ? "#fffdf0" : isOver ? "#fff5f5" : "white",
                   }}>
                     <div>
                       <span style={{ fontWeight: 600, fontSize: "13px" }}>{item.name}</span>
+                      {item.auto && (
+                        <span style={{ marginLeft: "6px", fontSize: "10px", background: "#fef9c3", color: "#854d0e", padding: "1px 5px", borderRadius: "3px", fontWeight: 600 }}>자동</span>
+                      )}
                       <span style={{ marginLeft: "8px", fontSize: "12px", color: "var(--muted)" }}>
                         재고 {item.currentStock}{item.unit}
                       </span>
@@ -311,10 +340,12 @@ function ProductForm({ type, accentColor, accentBg }: { type: "IN"|"OUT"; accent
                       <span style={{ fontWeight: 700, fontSize: "14px", color: "#c53030" }}>
                         −{item.quantity}{item.unit}
                       </span>
-                      <button type="button" onClick={() => removePartItem(item.partId)}
-                        style={{ width: "26px", height: "26px", borderRadius: "5px", border: "none", background: "#fff0f0", color: "#e05c5c", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Trash2 size={13} />
-                      </button>
+                      {!item.auto && (
+                        <button type="button" onClick={() => removePartItem(item.partId)}
+                          style={{ width: "26px", height: "26px", borderRadius: "5px", border: "none", background: "#fff0f0", color: "#e05c5c", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
