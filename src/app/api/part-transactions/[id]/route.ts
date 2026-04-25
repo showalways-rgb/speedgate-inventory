@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { recomputePartStock } from "@/lib/stock-recompute";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -8,17 +9,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       const oldTx = await tx.partTransaction.findUnique({ where: { id: Number(id) } });
       if (!oldTx) throw new Error("내역을 찾을 수 없습니다.");
 
-      // 재고 원복
-      const effect = oldTx.type === "IN" ? -oldTx.quantity : oldTx.quantity;
-      const stock = await tx.partStock.findUnique({ where: { partId: oldTx.partId } });
-      const updatedQty = Math.max(0, (stock?.quantity ?? 0) + effect);
-
-      await tx.partStock.upsert({
-        where: { partId: oldTx.partId },
-        update: { quantity: updatedQty },
-        create: { partId: oldTx.partId, quantity: updatedQty },
-      });
       await tx.partTransaction.delete({ where: { id: Number(id) } });
+      await recomputePartStock(tx, oldTx.partId);
     });
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -36,27 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const oldTx = await tx.partTransaction.findUnique({ where: { id: Number(id) } });
       if (!oldTx) throw new Error("내역을 찾을 수 없습니다.");
 
-      // 재고 보정: 기존 효과 취소 후 새 효과 적용
-      if (type !== undefined || quantity !== undefined) {
-        const newType = type ?? oldTx.type;
-        const newQty  = quantity !== undefined ? Number(quantity) : oldTx.quantity;
-        const oldEffect = oldTx.type === "IN" ? oldTx.quantity : -oldTx.quantity;
-        const newEffect = newType === "IN" ? newQty : -newQty;
-        const delta = newEffect - oldEffect;
-
-        const stock = await tx.partStock.findUnique({ where: { partId: oldTx.partId } });
-        const currentQty = stock?.quantity ?? 0;
-        const updatedQty = currentQty + delta;
-        if (updatedQty < 0) throw new Error(`재고 부족: 수정 후 재고가 ${updatedQty}개가 됩니다.`);
-
-        await tx.partStock.upsert({
-          where: { partId: oldTx.partId },
-          update: { quantity: updatedQty },
-          create: { partId: oldTx.partId, quantity: updatedQty },
-        });
-      }
-
-      return tx.partTransaction.update({
+      const updated = await tx.partTransaction.update({
         where: { id: Number(id) },
         data: {
           ...(note !== undefined ? { note } : {}),
@@ -66,6 +38,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         },
         include: { part: true },
       });
+
+      await recomputePartStock(tx, updated.partId);
+      return updated;
     });
 
     return NextResponse.json(result);
