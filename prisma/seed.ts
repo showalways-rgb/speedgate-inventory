@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const MODELS = ["SG-100", "SG-200", "SG-300", "SG-400", "SG-500", "SG-600"];
-const VARIANTS = ["Master", "Slave", "Center"];
+const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 const PARTS: { name: string; unit: string }[] = [];
 
 async function main() {

@@ -17,7 +17,7 @@ interface PartTx {
 
 interface EditValues { date: string; type: string; quantity: string; note: string }
 
-const VARIANTS = ["Master", "Slave", "Center"];
+const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 
 function toDateInput(iso: string) {
   return new Date(iso).toISOString().slice(0, 10);
@@ -511,6 +511,7 @@ function VariantBadge({ variant }: { variant: string }) {
     Master: { bg: "#e0e7ff", color: "#4338ca" },
     Slave:  { bg: "#d1fae5", color: "#065f46" },
     Center: { bg: "#fdf4ff", color: "#7e22ce" },
+    이동형:  { bg: "#fef9c3", color: "#854d0e" },
   };
   const s = map[variant] ?? { bg: "#f1f5f9", color: "#475569" };
   return <span style={{ padding: "2px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: 600, ...s }}>{variant}</span>;

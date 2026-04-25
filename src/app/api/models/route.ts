@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const VARIANTS = ["Master", "Slave", "Center"];
+const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 
 // 모델명 목록 조회 (중복 제거)
 export async function GET() {

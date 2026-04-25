@@ -166,7 +166,7 @@ export default function SettingsPage() {
           </SubmitBtn>
         </form>
         {addModelError && <ErrMsg>{addModelError}</ErrMsg>}
-        <p style={hintStyle}>추가하면 Master / Slave / Center 파생 모델 3개가 자동 생성됩니다.</p>
+        <p style={hintStyle}>추가하면 Master / Slave / Center / 이동형 파생 모델 4개가 자동 생성됩니다.</p>
       </div>
 
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
@@ -198,7 +198,7 @@ export default function SettingsPage() {
               ) : (
                 <ViewRow
                   label={model}
-                  badge="Master · Slave · Center"
+                  badge="Master · Slave · Center · 이동형"
                   onEdit={() => { setEditingModel(model); setEditModelValue(model); setEditModelError(""); setDeleteModelConfirm(null); }}
                   onDelete={() => { setDeleteModelConfirm(model); setDeleteModelError(""); setEditingModel(null); }}
                 />

@@ -15,11 +15,12 @@ interface PartStock {
   part: { name: string; unit: string };
 }
 
-const VARIANTS = ["Master", "Slave", "Center"];
+const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 const VARIANT_COLORS: Record<string, { bg: string; color: string }> = {
   Master: { bg: "#e0e7ff", color: "#4338ca" },
   Slave:  { bg: "#d1fae5", color: "#065f46" },
   Center: { bg: "#fdf4ff", color: "#7e22ce" },
+  이동형:  { bg: "#fef9c3", color: "#854d0e" },
 };
 
 export default function InventoryPage() {

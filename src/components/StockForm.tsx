@@ -13,7 +13,7 @@ interface PartItem { partId: number; name: string; unit: string; quantity: numbe
 
 interface Props { type: "IN" | "OUT" }
 
-const VARIANTS = ["Master", "Slave", "Center"];
+const VARIANTS = ["Master", "Slave", "Center", "이동형"];
 
 export default function StockForm({ type }: Props) {
   const [tab, setTab] = useState<"product" | "part">("product");
