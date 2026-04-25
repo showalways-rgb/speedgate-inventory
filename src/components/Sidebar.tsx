@@ -67,7 +67,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
             }}>
               <Package size={18} color="#5b6ee8" />
             </div>
-            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "15px" }}>
+            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "30px" }}>
               재고관리 시스템
             </span>
           </div>
