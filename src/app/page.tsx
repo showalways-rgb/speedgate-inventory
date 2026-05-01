@@ -42,29 +42,12 @@ export default function DashboardPage() {
   }, [selectedCatId, loadStock]);
 
   const selectedCat = categories.find(c => c.id === selectedCatId);
-  const totalIn = stockData.reduce((s, d) => s + d.totalIn, 0);
-  const totalOut = stockData.reduce((s, d) => s + d.totalOut, 0);
-  const totalStock = stockData.reduce((s, d) => s + d.currentStock, 0);
 
   return (
     <div>
       <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", marginBottom: "24px" }}>
         재고 현황
       </h1>
-
-      {/* 요약 카드 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "20px" }}>
-        {[
-          { label: "누적 입고", value: totalIn, color: "#4f86f7" },
-          { label: "누적 출고", value: totalOut, color: "#48bb78" },
-          { label: "현재고", value: totalStock, color: "#a0aec0" },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: "white", border: "1px solid var(--border)", borderRadius: "10px", padding: "16px 20px" }}>
-            <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>{label}</div>
-            <div style={{ fontSize: "24px", fontWeight: 700, color }}>{value}</div>
-          </div>
-        ))}
-      </div>
 
       {/* 차트 */}
       <div style={card}>
