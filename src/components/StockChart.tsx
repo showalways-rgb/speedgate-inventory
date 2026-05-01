@@ -12,16 +12,8 @@ interface StockItem {
 
 interface Props { data: StockItem[] }
 
-const cell: React.CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid var(--border)",
-  verticalAlign: "middle",
-};
-const cellNum: React.CSSProperties = {
-  ...cell,
-  textAlign: "right",
-  fontVariantNumeric: "tabular-nums",
-};
+const pad = "6px 12px";
+const muted = "#cbd5e1";
 
 export default function StockChart({ data }: Props) {
   if (!data.length) {
@@ -37,98 +29,179 @@ export default function StockChart({ data }: Props) {
       <style>{`
         .stock-chart-table tbody tr:hover { background-color: #f8fafc; }
       `}</style>
-      <table
-        className="stock-chart-table"
+      <div
         style={{
-          borderCollapse: "collapse",
-          width: "100%",
-          minWidth: "480px",
-          border: "1px solid var(--border)",
-          fontSize: "14px",
-          color: "var(--foreground)",
+          display: "inline-block",
+          maxWidth: "560px",
+          width: "auto",
+          borderRadius: "10px",
+          overflow: "hidden",
+          verticalAlign: "top",
+          boxSizing: "border-box",
         }}
       >
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              style={{
-                ...cell,
-                textAlign: "left",
-                background: "#f8fafc",
-                fontWeight: 600,
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              모델명
-            </th>
-            <th
-              scope="col"
-              style={{
-                ...cellNum,
-                background: "#f8fafc",
-                fontWeight: 600,
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              총 입고
-            </th>
-            <th
-              scope="col"
-              style={{
-                ...cellNum,
-                background: "#f8fafc",
-                fontWeight: 600,
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              출고
-            </th>
-            <th
-              scope="col"
-              style={{
-                ...cellNum,
-                background: "#f8fafc",
-                fontWeight: 600,
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              현재고
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => {
-            const totalIn = item.totalIn ?? 0;
-            const totalOut = item.totalOut ?? 0;
-            const currentStock = item.currentStock ?? 0;
-            const stockColor = currentStock === 0 ? "#dc2626" : "#2563eb";
+        <table
+          className="stock-chart-table"
+          style={{
+            borderCollapse: "collapse",
+            width: "auto",
+            maxWidth: "560px",
+            fontSize: "13px",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                style={{
+                  padding: pad,
+                  border: "1px solid var(--border)",
+                  verticalAlign: "middle",
+                  textAlign: "left",
+                  background: "#f8fafc",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  borderBottom: "2px solid #e2e8f0",
+                  minWidth: "160px",
+                }}
+              >
+                모델명
+              </th>
+              <th
+                scope="col"
+                style={{
+                  padding: pad,
+                  border: "1px solid var(--border)",
+                  verticalAlign: "middle",
+                  textAlign: "right",
+                  background: "#f8fafc",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  borderBottom: "2px solid #e2e8f0",
+                  minWidth: "80px",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                총 입고
+              </th>
+              <th
+                scope="col"
+                style={{
+                  padding: pad,
+                  border: "1px solid var(--border)",
+                  verticalAlign: "middle",
+                  textAlign: "right",
+                  background: "#f8fafc",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  borderBottom: "2px solid #e2e8f0",
+                  minWidth: "80px",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                출고
+              </th>
+              <th
+                scope="col"
+                style={{
+                  padding: pad,
+                  border: "1px solid var(--border)",
+                  verticalAlign: "middle",
+                  textAlign: "right",
+                  background: "#f8fafc",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  borderBottom: "2px solid #e2e8f0",
+                  minWidth: "80px",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                현재고
+              </th>
+            </tr>
+          </thead>
+          <tbody style={{ fontSize: "13px" }}>
+            {data.map((item) => {
+              const totalIn = item.totalIn ?? 0;
+              const totalOut = item.totalOut ?? 0;
+              const currentStock = item.currentStock ?? 0;
+              const dimRow = totalIn === 0 && totalOut === 0;
 
-            return (
-              <tr key={item.itemId}>
-                <td
-                  style={{
-                    ...cell,
-                    textAlign: "left",
-                    maxWidth: "220px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                  title={item.itemName}
-                >
-                  {item.itemName}
-                </td>
-                <td style={cellNum}>{totalIn}</td>
-                <td style={cellNum}>{totalOut}</td>
-                <td style={{ ...cellNum, color: stockColor, fontWeight: 600 }}>
-                  {currentStock}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              const stockColor = dimRow
+                ? muted
+                : currentStock === 0
+                  ? "#dc2626"
+                  : "#2563eb";
+
+              const rowText = dimRow ? muted : "var(--foreground)";
+
+              return (
+                <tr key={item.itemId}>
+                  <td
+                    style={{
+                      padding: pad,
+                      border: "1px solid var(--border)",
+                      textAlign: "left",
+                      verticalAlign: "middle",
+                      minWidth: "160px",
+                      maxWidth: "240px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      color: rowText,
+                    }}
+                    title={item.itemName}
+                  >
+                    {item.itemName}
+                  </td>
+                  <td
+                    style={{
+                      padding: pad,
+                      border: "1px solid var(--border)",
+                      textAlign: "right",
+                      verticalAlign: "middle",
+                      minWidth: "80px",
+                      fontVariantNumeric: "tabular-nums",
+                      color: rowText,
+                    }}
+                  >
+                    {totalIn}
+                  </td>
+                  <td
+                    style={{
+                      padding: pad,
+                      border: "1px solid var(--border)",
+                      textAlign: "right",
+                      verticalAlign: "middle",
+                      minWidth: "80px",
+                      fontVariantNumeric: "tabular-nums",
+                      color: rowText,
+                    }}
+                  >
+                    {totalOut}
+                  </td>
+                  <td
+                    style={{
+                      padding: pad,
+                      border: "1px solid var(--border)",
+                      textAlign: "right",
+                      verticalAlign: "middle",
+                      minWidth: "80px",
+                      fontVariantNumeric: "tabular-nums",
+                      color: stockColor,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {currentStock}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
