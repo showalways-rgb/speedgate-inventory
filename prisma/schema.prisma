@@ -43,6 +43,7 @@ model Transaction {
   note      String?
   addon     String?
   spec      String?
+  price     Int?
   date      DateTime
   createdAt DateTime @default(now())
 }

@@ -4,7 +4,7 @@ import { fifoStockOut, currentStock } from "@/lib/fifo";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { itemId, quantity, note, addon, spec, date } = body;
+  const { itemId, quantity, note, addon, spec, price, date } = body;
 
   if (!itemId || !quantity || !date) {
     return NextResponse.json({ error: "itemId, quantity, date 필수" }, { status: 400 });
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
       note: note || null,
       addon: addon || null,
       spec: spec || null,
+      price: price != null ? Number(price) : null,
       date: new Date(date),
     },
   });

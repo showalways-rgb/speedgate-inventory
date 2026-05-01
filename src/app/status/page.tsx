@@ -9,6 +9,7 @@ interface TxItem {
   note: string | null;
   addon: string | null;
   spec: string | null;
+  price: number | null;
   date: string;
   createdAt: string;
   item: {
@@ -27,11 +28,12 @@ const thStyle: React.CSSProperties = {
 const tdStyle: React.CSSProperties = {
   padding: "10px 14px", fontSize: "13px", borderBottom: "1px solid var(--border)",
 };
-
 const inputStyle: React.CSSProperties = {
   padding: "8px 12px", border: "1px solid var(--border)", borderRadius: "8px",
   fontSize: "13px", outline: "none",
 };
+
+const fmt = (n: number) => n.toLocaleString("ko-KR");
 
 export default function StatusPage() {
   const [transactions, setTransactions] = useState<TxItem[]>([]);
@@ -45,6 +47,7 @@ export default function StatusPage() {
   const [editNote, setEditNote] = useState("");
   const [editAddon, setEditAddon] = useState("");
   const [editSpec, setEditSpec] = useState("");
+  const [editPrice, setEditPrice] = useState("");
   const [editDate, setEditDate] = useState("");
 
   useEffect(() => {
@@ -80,15 +83,22 @@ export default function StatusPage() {
     setEditNote(tx.note ?? "");
     setEditAddon(tx.addon ?? "");
     setEditSpec(tx.spec ?? "");
+    setEditPrice(tx.price != null ? fmt(tx.price) : "");
     setEditDate(tx.date.slice(0, 10));
+  };
+
+  const handleEditPriceChange = (val: string) => {
+    const numeric = val.replace(/[^0-9]/g, "");
+    setEditPrice(numeric ? Number(numeric).toLocaleString("ko-KR") : "");
   };
 
   const handleEdit = async () => {
     if (!editId) return;
+    const priceNum = editPrice ? Number(editPrice.replace(/,/g, "")) : null;
     const res = await fetch(`/api/transactions/${editId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ note: editNote, addon: editAddon, spec: editSpec, date: editDate }),
+      body: JSON.stringify({ note: editNote, addon: editAddon, spec: editSpec, price: priceNum, date: editDate }),
     });
     if (!res.ok) { alert("수정 실패"); return; }
     setEditId(null);
@@ -96,6 +106,10 @@ export default function StatusPage() {
   };
 
   const isGate = (tx: TxItem) => tx.item.subcategory.category.name === "GATE";
+
+  // 합계 계산
+  const totalInAmt = transactions.filter(t => t.type === "IN").reduce((s, t) => s + (t.price ?? 0) * t.quantity, 0);
+  const totalOutAmt = transactions.filter(t => t.type === "OUT").reduce((s, t) => s + (t.price ?? 0) * t.quantity, 0);
 
   return (
     <div>
@@ -112,14 +126,29 @@ export default function StatusPage() {
           <option value="IN">입고</option>
           <option value="OUT">출고</option>
         </select>
-        <input type="date" style={inputStyle} value={filterFrom} onChange={e => setFilterFrom(e.target.value)} placeholder="시작일" />
+        <input type="date" style={inputStyle} value={filterFrom} onChange={e => setFilterFrom(e.target.value)} />
         <span style={{ fontSize: "13px", color: "var(--muted)" }}>~</span>
-        <input type="date" style={inputStyle} value={filterTo} onChange={e => setFilterTo(e.target.value)} placeholder="종료일" />
+        <input type="date" style={inputStyle} value={filterTo} onChange={e => setFilterTo(e.target.value)} />
         <button onClick={() => { setFilterCat(""); setFilterType(""); setFilterFrom(""); setFilterTo(""); }}
           style={{ padding: "8px 14px", border: "1px solid var(--border)", borderRadius: "8px", background: "white", fontSize: "13px", cursor: "pointer" }}>
           초기화
         </button>
       </div>
+
+      {/* 금액 합계 요약 */}
+      {transactions.length > 0 && (
+        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+          {[
+            { label: "입고 합계", value: totalInAmt, color: "#4f86f7" },
+            { label: "출고 합계", value: totalOutAmt, color: "#48bb78" },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ background: "white", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 20px", minWidth: "180px" }}>
+              <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>{label}</div>
+              <div style={{ fontSize: "18px", fontWeight: 700, color }}>₩{fmt(value)}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ overflowX: "auto", background: "white", borderRadius: "12px", border: "1px solid var(--border)" }}>
         {loading ? (
@@ -132,14 +161,15 @@ export default function StatusPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "거래처/프로젝트명", "추가모듈", "세부사양", ""].map(h => (
+                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "단가", "합계금액", "거래처/프로젝트명", "추가모듈", "세부사양", ""].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {transactions.map(tx => (
-                editId === tx.id ? (
+              {transactions.map(tx => {
+                const total = (tx.price ?? 0) * tx.quantity;
+                return editId === tx.id ? (
                   <tr key={tx.id} style={{ background: "#f0f4ff" }}>
                     <td style={tdStyle}>
                       <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
@@ -154,6 +184,17 @@ export default function StatusPage() {
                     <td style={tdStyle}>{tx.item.subcategory.name || "-"}</td>
                     <td style={tdStyle}>{tx.item.name}</td>
                     <td style={tdStyle}>{tx.quantity}</td>
+                    <td style={tdStyle}>
+                      <input
+                        value={editPrice} onChange={e => handleEditPriceChange(e.target.value)}
+                        inputMode="numeric"
+                        style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "12px", width: "90px" }}
+                        placeholder="0"
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      {editPrice ? `₩${fmt(Number(editPrice.replace(/,/g, "")) * tx.quantity)}` : "-"}
+                    </td>
                     <td style={tdStyle}>
                       <input value={editNote} onChange={e => setEditNote(e.target.value)}
                         style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "12px", width: "100px" }} />
@@ -178,7 +219,7 @@ export default function StatusPage() {
                     </td>
                   </tr>
                 ) : (
-                  <tr key={tx.id} style={{ transition: "background 0.1s" }}
+                  <tr key={tx.id}
                     onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "#f8fafc"}
                     onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "white"}>
                     <td style={tdStyle}>{tx.date.slice(0, 10)}</td>
@@ -195,6 +236,10 @@ export default function StatusPage() {
                     <td style={tdStyle}>{tx.item.subcategory.name || "-"}</td>
                     <td style={tdStyle}>{tx.item.name}</td>
                     <td style={{ ...tdStyle, fontWeight: 600 }}>{tx.quantity}</td>
+                    <td style={tdStyle}>{tx.price != null ? `₩${fmt(tx.price)}` : "-"}</td>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: tx.type === "IN" ? "#4f86f7" : "#48bb78" }}>
+                      {tx.price != null ? `₩${fmt(total)}` : "-"}
+                    </td>
                     <td style={tdStyle}>{tx.note || "-"}</td>
                     <td style={tdStyle}>{isGate(tx) ? (tx.addon || "-") : "-"}</td>
                     <td style={tdStyle}>{isGate(tx) ? (tx.spec || "-") : "-"}</td>
@@ -205,8 +250,8 @@ export default function StatusPage() {
                       </div>
                     </td>
                   </tr>
-                )
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
