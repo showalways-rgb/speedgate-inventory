@@ -80,7 +80,6 @@ export async function POST(req: Request) {
   }
 
   const noteStr = note && String(note).trim() ? String(note).trim() : null;
-  const companionNoteBase = `동반출고 ${item.name}${noteStr ? ` · ${noteStr}` : ""}`;
 
   try {
     const { mainTx, shippedCounters, companionShipped, virtualOut } = await prisma.$transaction(
@@ -118,7 +117,7 @@ export async function POST(req: Request) {
               itemId: itemRow.id,
               type: "OUT",
               quantity: need,
-              note: `${companionNoteBase} (${metas.map((m) => m.label).join(", ")})`,
+              note: null,
               addon: addonLabels[0] ?? null,
               spec: specLabels[0] ?? null,
               price: null,
