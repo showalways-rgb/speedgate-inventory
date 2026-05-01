@@ -59,7 +59,7 @@ export default function StockChart({ data }: Props) {
     <div style={{ width: "100%", overflowX: "auto" }}>
       <div style={{ display: "flex", gap: "20px", marginBottom: "16px", fontSize: "12px", flexWrap: "wrap" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <LegendSwatch color="#a0aec0" /> 현재고
+          <LegendSwatch color={STOCK_BLUE} /> 현재고
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
           <LegendSwatch color={OUT_GREEN} /> 출고 (수량)
