@@ -57,8 +57,9 @@ const SEED_DATA = [
 
 const ADDON_OPTIONS = [
   { type: "ADDON", value: "케이블 덕트", order: 1 },
-  { type: "ADDON", value: "이동식플레이트", order: 2 },
-  { type: "ADDON", value: "Fence(SUS)", order: 3 },
+  { type: "ADDON", value: "이동식플레이트(BT-400M)", order: 2 },
+  { type: "ADDON", value: "이동식플레이트(BF-400M)", order: 3 },
+  { type: "ADDON", value: "Fence(SUS)", order: 4 },
 ];
 
 const SPEC_OPTIONS = [
@@ -96,10 +97,14 @@ async function main() {
     }
   }
 
+  await prisma.addonOption.deleteMany({
+    where: { type: "ADDON", value: "이동식플레이트" },
+  });
+
   for (const opt of [...ADDON_OPTIONS, ...SPEC_OPTIONS]) {
     await prisma.addonOption.upsert({
       where: { type_value: { type: opt.type, value: opt.value } },
-      update: {},
+      update: { order: opt.order },
       create: opt,
     });
   }
