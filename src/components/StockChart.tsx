@@ -17,6 +17,7 @@ interface Props {
 const STOCK_BLUE = "#5b6ee8";
 const OUT_GREEN = "#48bb78";
 const TOTAL_IN_MUTED = "#cbd5e1";
+const TOTAL_IN_LABEL = "#64748b";
 
 function LegendSwatch({ color }: { color: string }) {
   return (
@@ -106,8 +107,17 @@ export default function StockChart({ data }: Props) {
                 <span style={{ fontSize: "14px", fontWeight: 700, width: "40px", textAlign: "right", color: TOTAL_IN_MUTED }}>
                   -
                 </span>
-                <span style={{ fontSize: "12px", width: "50px", color: TOTAL_IN_MUTED }}>-</span>
-                <span style={{ fontSize: "11px", color: TOTAL_IN_MUTED, whiteSpace: "nowrap" }}>총입고 {totalIn}</span>
+                <span style={{ fontSize: "14px", width: "50px", color: TOTAL_IN_MUTED }}>-</span>
+                <span
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: TOTAL_IN_LABEL,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  총입고 {totalIn}
+                </span>
               </div>
             </div>
           );
@@ -167,10 +177,12 @@ export default function StockChart({ data }: Props) {
               >
                 {cs}
               </span>
-              <span style={{ fontSize: "12px", color: OUT_GREEN, width: "50px" }}>
+              <span style={{ fontSize: "14px", fontWeight: 600, color: OUT_GREEN, width: "50px" }}>
                 {out > 0 ? `/ 출고 ${out}` : ""}
               </span>
-              <span style={{ fontSize: "11px", color: TOTAL_IN_MUTED, whiteSpace: "nowrap" }}>총입고 {totalIn}</span>
+              <span style={{ fontSize: "14px", fontWeight: 600, color: TOTAL_IN_LABEL, whiteSpace: "nowrap" }}>
+                총입고 {totalIn}
+              </span>
             </div>
           </div>
         );
