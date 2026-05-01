@@ -8,62 +8,63 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Product {
-  id           Int                  @id @default(autoincrement())
-  modelName    String
-  variant      String
-  stock        ProductStock?
-  transactions ProductTransaction[]
-
-  @@unique([modelName, variant])
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  subcategories Subcategory[]
 }
 
-model Part {
-  id           Int               @id @default(autoincrement())
-  name         String            @unique
-  unit         String            @default("EA")
-  stock        PartStock?
-  transactions PartTransaction[]
+model Subcategory {
+  id         Int      @id @default(autoincrement())
+  name       String
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  items      Item[]
+
+  @@unique([categoryId, name])
 }
 
-// 제품(모델) 현재고
-model ProductStock {
-  id        Int     @id @default(autoincrement())
-  product   Product @relation(fields: [productId], references: [id])
-  productId Int     @unique
-  quantity  Int     @default(0)
+model Item {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  unit          String        @default("EA")
+  subcategoryId Int
+  subcategory   Subcategory   @relation(fields: [subcategoryId], references: [id])
+  transactions  Transaction[]
+  counters      Counter[]
 }
 
-// 부품 현재고
-model PartStock {
-  id       Int  @id @default(autoincrement())
-  part     Part @relation(fields: [partId], references: [id])
-  partId   Int  @unique
-  quantity Int  @default(0)
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  itemId    Int
+  item      Item     @relation(fields: [itemId], references: [id])
+  type      String
+  quantity  Int
+  note      String?
+  addon     String?
+  spec      String?
+  date      DateTime
+  createdAt DateTime @default(now())
 }
 
-// 제품 입출고 내역
-model ProductTransaction {
-  id               Int               @id @default(autoincrement())
-  product          Product           @relation(fields: [productId], references: [id])
-  productId        Int
-  type             String            // "IN" | "OUT"
-  quantity         Int
-  note             String?
-  usedParts        String?           // 사용 부품(자유 입력)
-  createdAt        DateTime          @default(now())
-  partTransactions PartTransaction[]
+model Counter {
+  id        Int      @id @default(autoincrement())
+  itemId    Int
+  item      Item     @relation(fields: [itemId], references: [id])
+  seq       Int
+  status    String
+  inTxId    Int
+  outTxId   Int?
+  createdAt DateTime @default(now())
+
+  @@unique([itemId, seq])
 }
 
-// 부품 입출고 내역
-model PartTransaction {
-  id                   Int                  @id @default(autoincrement())
-  part                 Part                 @relation(fields: [partId], references: [id])
-  partId               Int
-  type                 String               // "IN" | "OUT"
-  quantity             Int
-  note                 String?
-  createdAt            DateTime             @default(now())
-  productTransaction   ProductTransaction?  @relation(fields: [productTransactionId], references: [id])
-  productTransactionId Int?
+model AddonOption {
+  id    Int    @id @default(autoincrement())
+  type  String
+  value String
+  order Int    @default(0)
+
+  @@unique([type, value])
 }

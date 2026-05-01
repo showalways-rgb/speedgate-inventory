@@ -17,7 +17,6 @@ const navItems = [
   { href: "/stock-in",  label: "입고",        icon: PackagePlus },
   { href: "/stock-out", label: "출고",        icon: PackageMinus },
   { href: "/status",    label: "입출고 현황", icon: BarChart2 },
-  { href: "/inventory", label: "현재고",      icon: Package },
   { href: "/settings",  label: "설정",        icon: Settings },
 ];
 

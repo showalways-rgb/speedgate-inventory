@@ -2,64 +2,111 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// 더 이상 기본 모델을 자동 생성하지 않음 (사용자가 직접 설정에서 추가)
-const VARIANTS = ["Master", "Slave", "Center", "이동형"];
-const PARTS: { name: string; unit: string }[] = [];
+const SEED_DATA = [
+  {
+    category: "GATE",
+    subcategories: [
+      {
+        name: "Turnstile",
+        items: ["BT-400", "BT-400M", "BT-500", "BT-500 Dummy"],
+      },
+      {
+        name: "Flap",
+        items: [
+          "BF-400 Master", "BF-400 Slave", "BF-400 Center", "BF-400M",
+          "BF-500 Master", "BF-500 Slave", "BF-500 Center",
+          "SBTL7000 Master", "SBTL7000 Slave", "SBTL7000 Center",
+        ],
+      },
+      {
+        name: "전신게이트",
+        items: ["FHT2300D"],
+      },
+    ],
+  },
+  {
+    category: "단말기",
+    subcategories: [
+      {
+        name: "안면인식",
+        items: [
+          "SPEEDFACE-V3L", "SPEEDFACE-V3L-QR",
+          "SPEEDFACE-V5L", "SPEEDFACE-V5L-MF", "SPEEDFACE-V5L-RFID", "SPEEDFACE-V5L-QR",
+          "SenseFace 4A", "Ubio X Face SC [13.56Mhz]", "Ubio X Face Pro",
+        ],
+      },
+      {
+        name: "지문인식",
+        items: [
+          "AC-5000IK SC", "AC-2200 RF(125Khz)", "AC-2100 PLUS[13.56Mhz]",
+          "AC-2100 SC", "AC-2200 SC", "AC-1100 RF", "AC-2200 RF",
+        ],
+      },
+    ],
+  },
+  {
+    category: "쉼터",
+    subcategories: [
+      {
+        name: "",
+        items: ["구급상자", "냉장고", "접이식의자", "접이식테이블", "제세동기", "체온계", "혈압계", "헬스ID"],
+      },
+    ],
+  },
+];
 
-// 기존에 자동 생성된 레거시 모델 목록 (트랜잭션 없으면 삭제)
-const LEGACY_MODELS = ["SG-100", "SG-200", "SG-300", "SG-400", "SG-500", "SG-600"];
+const ADDON_OPTIONS = [
+  { type: "ADDON", value: "케이블 덕트", order: 1 },
+  { type: "ADDON", value: "이동식플레이트", order: 2 },
+  { type: "ADDON", value: "Fence(SUS)", order: 3 },
+];
+
+const SPEC_OPTIONS = [
+  { type: "SPEC", value: "540mm", order: 1 },
+  { type: "SPEC", value: "710mm", order: 2 },
+  { type: "SPEC", value: "800mm", order: 3 },
+  { type: "SPEC", value: "400mm", order: 4 },
+  { type: "SPEC", value: "베이스 플레이트, 상판, 방부목 Ass'y", order: 5 },
+];
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Seeding...");
 
-  // 레거시 모델 정리 (트랜잭션이 없는 경우에만 삭제)
-  for (const modelName of LEGACY_MODELS) {
-    const products = await prisma.product.findMany({
-      where: { modelName },
-      include: { transactions: true },
+  for (const { category, subcategories } of SEED_DATA) {
+    const cat = await prisma.category.upsert({
+      where: { name: category },
+      update: {},
+      create: { name: category },
     });
-    for (const product of products) {
-      if (product.transactions.length === 0) {
-        await prisma.productStock.deleteMany({ where: { productId: product.id } });
-        await prisma.product.delete({ where: { id: product.id } });
-      }
-    }
-  }
 
-  // 모든 기존 모델에 누락된 파생모델 보완
-  const existingProducts = await prisma.product.findMany({ select: { modelName: true, variant: true } });
-  const existingSet = new Set(existingProducts.map(p => `${p.modelName}__${p.variant}`));
-  const allModelNames = [...new Set(existingProducts.map(p => p.modelName))];
+    for (const { name: subName, items } of subcategories) {
+      const sub = await prisma.subcategory.upsert({
+        where: { categoryId_name: { categoryId: cat.id, name: subName } },
+        update: {},
+        create: { name: subName, categoryId: cat.id },
+      });
 
-  for (const modelName of allModelNames) {
-    for (const variant of VARIANTS) {
-      if (!existingSet.has(`${modelName}__${variant}`)) {
-        const product = await prisma.product.create({ data: { modelName, variant } });
-        await prisma.productStock.upsert({
-          where: { productId: product.id },
+      for (const itemName of items) {
+        await prisma.item.upsert({
+          where: { name: itemName },
           update: {},
-          create: { productId: product.id, quantity: 0 },
+          create: { name: itemName, unit: "EA", subcategoryId: sub.id },
         });
       }
     }
   }
 
-  for (const part of PARTS) {
-    await prisma.part.upsert({
-      where: { name: part.name },
+  for (const opt of [...ADDON_OPTIONS, ...SPEC_OPTIONS]) {
+    await prisma.addonOption.upsert({
+      where: { type_value: { type: opt.type, value: opt.value } },
       update: {},
-      create: part,
+      create: opt,
     });
   }
 
-  console.log("Seeding complete.");
+  console.log("Seed complete.");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
