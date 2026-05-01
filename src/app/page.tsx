@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import StockChart from "@/components/StockChart";
 
 interface StockItem {
@@ -20,29 +20,42 @@ const card: React.CSSProperties = {
 export default function DashboardPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
-  const [stockData, setStockData] = useState<StockItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allStockData, setAllStockData] = useState<StockItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/categories").then(r => r.json()).then((cats: Category[]) => {
-      setCategories(cats);
-      if (cats.length > 0) setSelectedCatId(cats[0].id);
-    });
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const [catsRes, stockRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/stock"),
+        ]);
+        const cats: Category[] = await catsRes.json();
+        const stock: StockItem[] = await stockRes.json();
+        if (cancelled) return;
+        setCategories(cats);
+        if (cats.length > 0) setSelectedCatId(cats[0].id);
+        setAllStockData(stock);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const loadStock = useCallback(async (catId: number | null) => {
-    setLoading(true);
-    const url = catId ? `/api/stock?categoryId=${catId}` : "/api/stock";
-    const data: StockItem[] = await fetch(url).then(r => r.json());
-    setStockData(data);
-    setLoading(false);
-  }, []);
+  const stockData = useMemo(() => {
+    if (selectedCatId === null) return [];
+    return allStockData.filter((item) => item.categoryId === selectedCatId);
+  }, [allStockData, selectedCatId]);
 
-  useEffect(() => {
-    if (selectedCatId !== null) loadStock(selectedCatId);
-  }, [selectedCatId, loadStock]);
-
-  const selectedCat = categories.find(c => c.id === selectedCatId);
+  const selectedCat = categories.find((c) => c.id === selectedCatId);
 
   return (
     <div>

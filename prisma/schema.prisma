@@ -46,6 +46,9 @@ model Transaction {
   price     Int?
   date      DateTime
   createdAt DateTime @default(now())
+
+  @@index([itemId, type])
+  @@index([date])
 }
 
 model Counter {
@@ -58,6 +61,7 @@ model Counter {
   outTxId   Int?
   createdAt DateTime @default(now())
 
+  @@index([itemId, status])
   @@unique([itemId, seq])
 }
 
