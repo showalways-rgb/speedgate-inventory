@@ -19,7 +19,6 @@ const label: React.CSSProperties = {
   display: "block", fontSize: "12px", fontWeight: 600, letterSpacing: "0.02em",
   color: "var(--muted)", marginBottom: "6px",
 };
-const smInput: React.CSSProperties = { ...input, padding: "9px 11px", fontSize: "13px", borderRadius: "8px" };
 const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom: "6px" };
 
 const GREEN = "#16a34a";
@@ -51,6 +50,18 @@ function CardHeader({
       <div style={{ height: "3px", background: accent, marginTop: "16px", marginLeft: "-22px", marginRight: "-22px", marginBottom: "-18px", borderRadius: "0 0 3px 3px" }} />
     </div>
   );
+}
+
+function sortOptions(opts: AddonOption[]): AddonOption[] {
+  const order = ["이동식플레이트", "브라켓", "케이블덕트"];
+  return [...opts].sort((a, b) => {
+    const ai = order.findIndex((k) => a.value.startsWith(k));
+    const bi = order.findIndex((k) => b.value.startsWith(k));
+    const ap = ai === -1 ? order.length : ai;
+    const bp = bi === -1 ? order.length : bi;
+    if (ap !== bp) return ap - bp;
+    return a.value.localeCompare(b.value, "ko");
+  });
 }
 
 export default function StockOutPage() {
@@ -215,10 +226,10 @@ export default function StockOutPage() {
 
           <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양</div>
 
-          <div style={{ marginBottom: "12px", padding: "12px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+          <div style={{ marginBottom: "12px" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "8px" }}>
-              {addonOptions.map(o => (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+              {sortOptions(addonOptions).map(o => (
                 <button
                   key={o.id}
                   type="button"
@@ -236,13 +247,12 @@ export default function StockOutPage() {
                 </button>
               ))}
             </div>
-            <input type="text" style={smInput} value={addon} onChange={e => setAddon(e.target.value)} placeholder="직접 입력" />
           </div>
 
-          <div style={{ marginBottom: "14px", padding: "12px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+          <div style={{ marginBottom: "14px" }}>
             <label style={{ ...smLabel, color: SPEC_ACCENT }}>세부사양</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "8px" }}>
-              {specOptions.map(o => (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+              {sortOptions(specOptions).map(o => (
                 <button
                   key={o.id}
                   type="button"
@@ -260,7 +270,6 @@ export default function StockOutPage() {
                 </button>
               ))}
             </div>
-            <input type="text" style={smInput} value={spec} onChange={e => setSpec(e.target.value)} placeholder="직접 입력" />
           </div>
 
           {error && (

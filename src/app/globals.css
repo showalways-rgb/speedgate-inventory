@@ -67,17 +67,6 @@ body {
   overflow: hidden;
 }
 
-.addon-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
-@media (max-width: 520px) {
-  .addon-form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 .stock-side-stack {
   display: flex;
   flex-direction: column;

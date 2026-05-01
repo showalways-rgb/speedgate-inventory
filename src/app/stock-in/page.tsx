@@ -146,12 +146,14 @@ function AddonStockInPanel({
 
         <div style={{ height: "1px", background: "var(--border)", margin: "20px 0" }} />
 
-        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>금액·일자</div>
-        <div className="addon-form-row">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
           <div>
-            <label style={label}>날짜</label>
+            <label style={label}>입고일</label>
             <input type="date" style={input} value={date} onChange={e => setDate(e.target.value)} />
           </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
           <div>
             <label style={label}>수량</label>
             <input type="number" min={1} style={input} value={quantity} onChange={e => setQuantity(e.target.value)} />
@@ -163,12 +165,16 @@ function AddonStockInPanel({
         </div>
 
         {unitPrice > 0 && (
-          <div style={{ fontSize: "13px", color: accent, fontWeight: 700, marginTop: "8px", textAlign: "right" }}>
-            합계 ₩{fmt(qty * unitPrice)}
+          <div style={{
+            background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "10px",
+            padding: "12px 16px", marginBottom: "14px", display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <span style={{ fontSize: "13px", color: "var(--muted)" }}>합계 금액</span>
+            <span style={{ fontSize: "17px", fontWeight: 800, color: accent }}>₩{fmt(qty * unitPrice)}</span>
           </div>
         )}
 
-        <div style={{ marginTop: "12px", marginBottom: "14px" }}>
+        <div style={{ marginBottom: "14px" }}>
           <label style={label}>거래처 / 프로젝트명</label>
           <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
         </div>
