@@ -12,43 +12,46 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "categoryName, value, date, quantity 필수" }, { status: 400 });
   }
 
-  // 카테고리 upsert
-  const category = await prisma.category.upsert({
-    where: { name: categoryName },
-    update: {},
-    create: { name: categoryName },
-  });
+  const qty = Number(quantity);
 
-  // 소분류 upsert (name = "")
-  const subcategory = await prisma.subcategory.upsert({
-    where: { categoryId_name: { categoryId: category.id, name: "" } },
-    update: {},
-    create: { name: "", categoryId: category.id },
-  });
+  const { tx, counters } = await prisma.$transaction(async (db) => {
+    const category = await db.category.upsert({
+      where: { name: categoryName },
+      update: {},
+      create: { name: categoryName },
+    });
 
-  // 아이템 upsert
-  const item = await prisma.item.upsert({
-    where: { name: value },
-    update: {},
-    create: { name: value, unit: "EA", subcategoryId: subcategory.id },
-  });
+    const subcategory = await db.subcategory.upsert({
+      where: { categoryId_name: { categoryId: category.id, name: "" } },
+      update: {},
+      create: { name: "", categoryId: category.id },
+    });
 
-  const tx = await prisma.transaction.create({
-    data: {
-      itemId: item.id,
-      type: "IN",
-      quantity: Number(quantity),
-      price: price != null ? Number(price) : null,
-      note: note || null,
-      date: new Date(date),
-    },
-  });
+    const item = await db.item.upsert({
+      where: { name: value },
+      update: {},
+      create: { name: value, unit: "EA", subcategoryId: subcategory.id },
+    });
 
-  await createCounters(item.id, Number(quantity), tx.id);
+    const row = await db.transaction.create({
+      data: {
+        itemId: item.id,
+        type: "IN",
+        quantity: qty,
+        price: price != null ? Number(price) : null,
+        note: note || null,
+        date: new Date(date),
+      },
+    });
 
-  const counters = await prisma.counter.findMany({
-    where: { inTxId: tx.id },
-    orderBy: { seq: "asc" },
+    await createCounters(item.id, qty, row.id, db);
+
+    const countersCreated = await db.counter.findMany({
+      where: { inTxId: row.id },
+      orderBy: { seq: "asc" },
+    });
+
+    return { tx: row, counters: countersCreated };
   });
 
   return NextResponse.json({ transaction: tx, counters }, { status: 201 });

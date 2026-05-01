@@ -97,7 +97,8 @@ export default function SettingsPage() {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ type, value }),
     });
-    type === "ADDON" ? setNewAddon("") : setNewSpec("");
+    if (type === "ADDON") setNewAddon("");
+    else setNewSpec("");
     loadAddonOptions();
   };
 

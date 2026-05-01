@@ -102,9 +102,22 @@ async function main() {
   await prisma.addonOption.deleteMany({
     where: {
       type: "ADDON",
-      value: { in: ["이동식플레이트", "케이블 덕트"] },
+      OR: [{ value: "케이블 덕트" }, { value: "이동식플레이트" }],
     },
   });
+
+  /** 구 단일 품목명 「이동식플레이트」만 삭제(BT/BF별 품목·옵션은 유지) */
+  const orphanPlate = await prisma.item.findMany({
+    where: { name: "이동식플레이트" },
+    select: { id: true },
+  });
+  const orphanIds = orphanPlate.map((i) => i.id);
+  if (orphanIds.length > 0) {
+    await prisma.counter.deleteMany({ where: { itemId: { in: orphanIds } } });
+    await prisma.transaction.deleteMany({ where: { itemId: { in: orphanIds } } });
+    await prisma.item.deleteMany({ where: { id: { in: orphanIds } } });
+    console.log(`Deleted legacy Item "이동식플레이트" (${orphanIds.length}) and counters/transactions.`);
+  }
 
   for (const opt of [...ADDON_OPTIONS, ...SPEC_OPTIONS]) {
     await prisma.addonOption.upsert({

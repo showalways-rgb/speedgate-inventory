@@ -39,20 +39,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "itemId, quantity, date 필수" }, { status: 400 });
   }
 
-  const tx = await prisma.transaction.create({
-    data: {
-      itemId: Number(itemId),
-      type: "IN",
-      quantity: Number(quantity),
-      note: note || null,
-      addon: addon || null,
-      spec: spec || null,
-      price: price != null ? Number(price) : null,
-      date: new Date(date),
-    },
+  const qty = Number(quantity);
+  const tx = await prisma.$transaction(async (db) => {
+    const row = await db.transaction.create({
+      data: {
+        itemId: Number(itemId),
+        type: "IN",
+        quantity: qty,
+        note: note || null,
+        addon: addon || null,
+        spec: spec || null,
+        price: price != null ? Number(price) : null,
+        date: new Date(date),
+      },
+    });
+    await createCounters(Number(itemId), qty, row.id, db);
+    return row;
   });
-
-  await createCounters(Number(itemId), Number(quantity), tx.id);
 
   const counters = await prisma.counter.findMany({
     where: { inTxId: tx.id },
