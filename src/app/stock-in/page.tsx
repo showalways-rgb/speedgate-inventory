@@ -329,10 +329,10 @@ export default function StockInPage() {
               onClick={handleSubmit}
               disabled={loading}
               style={{
-                width: "100%", padding: "14px", background: "var(--primary)", color: "white",
-                border: "none", borderRadius: "11px", fontSize: "15px", fontWeight: 700,
+                width: "100%", padding: "11px", background: "var(--primary)", color: "white",
+                border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.75 : 1,
-                boxShadow: "0 4px 14px rgba(91, 110, 232, 0.35)",
+                boxShadow: "0 2px 8px rgba(91, 110, 232, 0.33)",
               }}
             >
               {loading ? "처리 중…" : "모델 입고 등록"}
