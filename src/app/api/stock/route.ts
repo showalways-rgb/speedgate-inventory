@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { DERIVED_BOM, getDerivedAssemblyForItem } from "@/lib/derived-stock";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -24,6 +25,12 @@ export async function GET(req: Request) {
       ]);
       const totalIn = inAgg._sum.quantity ?? 0;
       const totalOut = totalIn - currentStock;
+
+      let assemblyLink: Awaited<ReturnType<typeof getDerivedAssemblyForItem>> = null;
+      if (DERIVED_BOM[item.name]) {
+        assemblyLink = await getDerivedAssemblyForItem(item.name);
+      }
+
       return {
         itemId: item.id,
         itemName: item.name,
@@ -33,6 +40,7 @@ export async function GET(req: Request) {
         totalIn,
         totalOut,
         currentStock,
+        assemblyLink,
       };
     })
   );
