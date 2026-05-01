@@ -7,11 +7,6 @@ interface StockItem {
   itemId: number; itemName: string; subcategoryName: string;
   categoryName: string; categoryId: number;
   totalIn: number; totalOut: number; currentStock: number;
-  assemblyLink?: {
-    assembleableSets: number;
-    bottleneck: { role: string; label: string; stock: number } | null;
-    components: Array<{ role: string; label: string; stock: number }>;
-  } | null;
 }
 interface Category { id: number; name: string }
 
