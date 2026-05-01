@@ -12,6 +12,29 @@ interface StockItem {
 }
 interface Category { id: number; name: string }
 
+const ADDON_ORDER = [
+  "이동식플레이트(BT-400M)",
+  "이동식플레이트(BF-400M)",
+  "브라켓(소)_Rots-02",
+  "브라켓(대)_KJZ-03",
+  "케이블덕트(BT-400용_710mm)",
+  "케이블덕트(BT-500용_540mm)",
+  "케이블덕트(BF-400용_800mm)",
+];
+
+function sortAddonStockByOrder(items: StockItem[]): StockItem[] {
+  const indexByName = new Map<string, number>(
+    ADDON_ORDER.map((name, i) => [name, i]),
+  );
+  const tail = ADDON_ORDER.length;
+  return [...items].sort((a, b) => {
+    const ai = indexByName.has(a.itemName) ? indexByName.get(a.itemName)! : tail;
+    const bi = indexByName.has(b.itemName) ? indexByName.get(b.itemName)! : tail;
+    if (ai !== bi) return ai - bi;
+    return a.itemName.localeCompare(b.itemName, "ko");
+  });
+}
+
 const card: React.CSSProperties = {
   background: "white", border: "1px solid var(--border)",
   borderRadius: "12px", padding: "24px", marginBottom: "20px",
@@ -57,6 +80,11 @@ export default function DashboardPage() {
 
   const selectedCat = categories.find((c) => c.id === selectedCatId);
 
+  const chartData = useMemo(() => {
+    if (selectedCat?.name === "추가모듈") return sortAddonStockByOrder(stockData);
+    return stockData;
+  }, [stockData, selectedCat?.name]);
+
   return (
     <div>
       <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", marginBottom: "24px" }}>
@@ -92,7 +120,7 @@ export default function DashboardPage() {
         {loading ? (
           <div style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)" }}>불러오는 중...</div>
         ) : (
-          <StockChart data={stockData} />
+          <StockChart data={chartData} />
         )}
       </div>
 

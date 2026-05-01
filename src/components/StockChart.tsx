@@ -16,8 +16,7 @@ interface Props {
 
 const STOCK_BLUE = "#5b6ee8";
 const OUT_GREEN = "#48bb78";
-const MUTED_GRAY = "#cbd5e0";
-const NUM_MUTED = "#718096";
+const TOTAL_IN_MUTED = "#cbd5e1";
 
 function LegendSwatch({ color }: { color: string }) {
   return (
@@ -52,7 +51,17 @@ export default function StockChart({ data }: Props) {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    marginBottom: "10px",
+    marginBottom: "8px",
+  };
+
+  const statsGridStyle: React.CSSProperties = {
+    display: "flex",
+    gap: "8px",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    minWidth: "200px",
+    flexShrink: 0,
+    fontVariantNumeric: "tabular-nums",
   };
 
   return (
@@ -92,7 +101,14 @@ export default function StockChart({ data }: Props) {
               >
                 {item.itemName}
               </div>
-              <span style={{ fontSize: "12px", color: MUTED_GRAY }}>입고 없음</span>
+              <div style={{ flex: 1, minWidth: "80px", maxWidth: "480px" }} />
+              <div style={statsGridStyle}>
+                <span style={{ fontSize: "14px", fontWeight: 700, width: "40px", textAlign: "right", color: TOTAL_IN_MUTED }}>
+                  -
+                </span>
+                <span style={{ fontSize: "12px", width: "50px", color: TOTAL_IN_MUTED }}>-</span>
+                <span style={{ fontSize: "11px", color: TOTAL_IN_MUTED, whiteSpace: "nowrap" }}>총입고 {totalIn}</span>
+              </div>
             </div>
           );
         }
@@ -118,15 +134,15 @@ export default function StockChart({ data }: Props) {
               {item.itemName}
             </div>
 
-            <div style={{ flex: 1, minWidth: "80px" }}>
+            <div style={{ flex: 1, minWidth: "80px", maxWidth: "480px" }}>
               <div
                 style={{
                   width: `${barScale}%`,
                   maxWidth: "100%",
                   display: "flex",
                   alignItems: "stretch",
-                  height: "20px",
-                  borderRadius: "4px",
+                  height: "10px",
+                  borderRadius: "5px",
                   overflow: "hidden",
                 }}
               >
@@ -139,10 +155,22 @@ export default function StockChart({ data }: Props) {
               </div>
             </div>
 
-            <div style={{ fontSize: "12px", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
-              <span style={{ color: cs === 0 && out > 0 ? "#dc2626" : NUM_MUTED }}>{cs}</span>
-              {out > 0 && <span style={{ color: OUT_GREEN }}>{` / ${out}`}</span>}
-              <span style={{ color: MUTED_GRAY }}>{` (총입고 ${totalIn})`}</span>
+            <div style={statsGridStyle}>
+              <span
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  width: "40px",
+                  textAlign: "right",
+                  color: cs === 0 ? "#dc2626" : "var(--primary)",
+                }}
+              >
+                {cs}
+              </span>
+              <span style={{ fontSize: "12px", color: OUT_GREEN, width: "50px" }}>
+                {out > 0 ? `/ 출고 ${out}` : ""}
+              </span>
+              <span style={{ fontSize: "11px", color: TOTAL_IN_MUTED, whiteSpace: "nowrap" }}>총입고 {totalIn}</span>
             </div>
           </div>
         );
