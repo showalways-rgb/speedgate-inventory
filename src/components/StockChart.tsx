@@ -16,7 +16,6 @@ function rowScale(item: StockItem): number {
   if (item.virtualOut) {
     return Math.max(item.totalIn, item.totalOut, 1);
   }
-  /** 입고·실물고 기준과 무관하게, 표시 출고가 입고를 넘을 수 있음(BT-400M→BT-400 등) */
   return Math.max(item.totalIn, item.currentStock + item.totalOut, 1);
 }
 
@@ -55,9 +54,6 @@ export default function StockChart({ data }: Props) {
               {label}
             </div>
           ))}
-          <span style={{ fontSize: "11px", color: "#9333ea", padding: "4px 10px", background: "#f5f3ff", borderRadius: "999px" }}>
-            BT-400M→BT-400 · BF-400M→Master/Slave 출고 집계 연동 (재고는 본체 FIFO만)
-          </span>
         </div>
 
         {data.map((item) => {
@@ -90,9 +86,6 @@ export default function StockChart({ data }: Props) {
                   textAlign: "right", paddingRight: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                 }}>
                   {item.itemName}
-                  {item.virtualOut && (
-                    <div style={{ fontSize: "10px", color: "#7c3aed", fontWeight: 600, marginTop: "4px" }}>파생 집계</div>
-                  )}
                 </div>
                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                   <div style={{ width: `${barW}%`, height: "20px", borderRadius: "4px", overflow: "hidden", display: "flex", minWidth: "4px" }}>
@@ -118,10 +111,6 @@ export default function StockChart({ data }: Props) {
             </div>
           );
         })}
-
-        <div style={{ marginTop: "12px", paddingLeft: "170px", fontSize: "11px", color: "#a0aec0", lineHeight: 1.45 }}>
-          현재고 / 출고 수량 (총 입고) · 보라: 출고 등록 건수
-        </div>
       </div>
     </div>
   );

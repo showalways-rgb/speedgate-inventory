@@ -23,7 +23,7 @@ const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom:
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
-}: { accent: string; icon: React.ElementType; badge: string; title: string; desc: string }) {
+}: { accent: string; icon: React.ElementType; badge: string; title: string; desc?: string }) {
   return (
     <div style={{ borderBottom: "1px solid var(--border)", padding: "18px 22px", background: "linear-gradient(180deg, #fafbff 0%, #fff 100%)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
@@ -39,12 +39,14 @@ function CardHeader({
             fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
             letterSpacing: "0.06em", color: "#94a3b8",
           }}>{badge}</span>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>
+          <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>
             {title}
           </div>
-          <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>
-            {desc}
-          </div>
+          {desc ? (
+            <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>
+              {desc}
+            </div>
+          ) : null}
         </div>
       </div>
       <div style={{ height: "3px", background: accent, marginTop: "16px", marginLeft: "-22px", marginRight: "-22px", marginBottom: "-18px", borderRadius: "0 0 3px 3px", opacity: 0.92 }} />
@@ -53,10 +55,9 @@ function CardHeader({
 }
 
 function AddonStockInPanel({
-  title, subtitle, badge, accent, Icon, categoryName, options, submitLabel,
+  title, badge, accent, Icon, categoryName, options, submitLabel,
 }: {
   title: string;
-  subtitle: string;
   badge: string;
   accent: string;
   Icon: React.ElementType;
@@ -107,7 +108,7 @@ function AddonStockInPanel({
 
   return (
     <div className="stock-card">
-      <CardHeader accent={accent} icon={Icon} badge={badge} title={title} desc={subtitle} />
+      <CardHeader accent={accent} icon={Icon} badge={badge} title={title} />
       <div style={{ padding: "18px 20px 20px" }}>
         <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>항목 선택</div>
         <div style={{
@@ -115,7 +116,7 @@ function AddonStockInPanel({
           border: "1px solid #e2e8f0", minHeight: "44px",
         }}>
           {options.length === 0 ? (
-            <span style={{ fontSize: "12px", color: "#cbd5e1" }}>설정 화면에서 목록을 추가하세요.</span>
+            <span style={{ fontSize: "12px", color: "#cbd5e1" }}>목록 없음</span>
           ) : (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
               {options.map(o => (
@@ -145,18 +146,9 @@ function AddonStockInPanel({
             type="text" style={{ ...smInput }}
             value={customVal}
             onChange={e => { setCustomVal(e.target.value); setSelected(""); }}
-            placeholder="목록에 없을 때 이름을 적어 주세요."
+            placeholder=""
           />
         </div>
-
-        {value && (
-          <div style={{
-            marginTop: "12px", padding: "10px 12px", borderRadius: "8px",
-            background: "#eef2ff", border: "1px solid #c7d2fe", fontSize: "12px", color: "#4338ca", fontWeight: 600,
-          }}>
-            등록 대상 · {value}
-          </div>
-        )}
 
         <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
 
@@ -260,21 +252,12 @@ export default function StockInPage() {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: 800, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>입고 등록</h1>
-        <p style={{ fontSize: "14px", color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
-          왼쪽에서 모델을 입고하거나, 오른쪽에서 추가모듈·세부사양만 단독으로 입고할 수 있습니다.
-        </p>
+        <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>입고 등록</h1>
       </div>
 
       <div className="stock-register-grid">
         <div className="stock-card">
-          <CardHeader
-            accent="var(--primary)"
-            icon={Package}
-            badge="Primary"
-            title="모델 입고"
-            desc="대분류 → 소분류 → 모델을 선택한 뒤 수량·단가를 입력합니다."
-          />
+          <CardHeader accent="var(--primary)" icon={Package} badge="Primary" title="모델 입고" />
           <div style={{ padding: "22px 24px 24px" }}>
             <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>품목 선택</div>
             <CategorySelector key={selected === null ? "reset" : "filled"} onSelect={setSelected} />
@@ -352,8 +335,7 @@ export default function StockInPage() {
 
         <div className="stock-side-stack">
           <AddonStockInPanel
-            title="추가모듈 단독 입고"
-            subtitle="설정된 목록 또는 직접 입력값으로 카운터가 부여됩니다."
+            title="추가모듈 입고"
             badge="Standalone"
             accent="#6366f1"
             Icon={Puzzle}
@@ -362,8 +344,7 @@ export default function StockInPage() {
             submitLabel="추가모듈 입고 등록"
           />
           <AddonStockInPanel
-            title="세부사양 단독 입고"
-            subtitle="사양 이름만으로도 입고 처리할 수 있습니다."
+            title="세부사양 입고"
             badge="Standalone"
             accent="#0d9488"
             Icon={Ruler}

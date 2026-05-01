@@ -29,7 +29,7 @@ const SPEC_ACCENT = "#0d9488";
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
-}: { accent: string; icon: React.ElementType; badge: string; title: string; desc: string }) {
+}: { accent: string; icon: React.ElementType; badge: string; title: string; desc?: string }) {
   return (
     <div style={{ borderBottom: "1px solid var(--border)", padding: "18px 22px", background: "linear-gradient(180deg, #fafffb 0%, #fff 100%)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
@@ -43,7 +43,9 @@ function CardHeader({
         <div style={{ minWidth: 0 }}>
           <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>{badge}</span>
           <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>{title}</div>
-          <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>{desc}</div>
+          {desc ? (
+            <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>{desc}</div>
+          ) : null}
         </div>
       </div>
       <div style={{ height: "3px", background: accent, marginTop: "16px", marginLeft: "-22px", marginRight: "-22px", marginBottom: "-18px", borderRadius: "0 0 3px 3px" }} />
@@ -97,7 +99,6 @@ export default function StockOutPage() {
     if (!selected?.itemId) { setError("모델을 선택해주세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
     const virtual = isVirtualOutItemName(selected.itemName);
-    /* BT-400M/BF-400M은 FIFO 재고와 무관하게 항상 등록 가능 */
     if (!virtual && currentStock !== null && qty > currentStock) {
       setError(`재고 부족: 현재고 ${currentStock}개, 요청 ${qty}개`);
       return;
@@ -158,19 +159,10 @@ export default function StockOutPage() {
     <div style={{ maxWidth: "640px" }}>
       <div style={{ marginBottom: "22px" }}>
         <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>출고 등록</h1>
-        <p style={{ fontSize: "14px", color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
-          선택한 모델은 입고 순서대로 차감됩니다. 추가모듈·세부사양을 적으면, 위 출고 수량만큼 동일 이름으로 입고된 품목에서도 각각 차감됩니다.
-        </p>
       </div>
 
       <div className="stock-card">
-        <CardHeader
-          accent={GREEN}
-          icon={PackageMinus}
-          badge="출고"
-          title="모델 출고"
-          desc="모델·추가모듈·세부사양(입고분) 모두 같은 수량만큼 선입선출로 차감됩니다."
-        />
+        <CardHeader accent={GREEN} icon={PackageMinus} badge="출고" title="모델 출고" />
         <div style={{ padding: "22px 24px 24px" }}>
           <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>품목 선택</div>
           <CategorySelector key={selected === null ? "reset" : "filled"} onSelect={setSelected} />
@@ -191,7 +183,7 @@ export default function StockOutPage() {
               </span>
               {currentStock !== null && (
                 <span style={{ fontWeight: 800, color: currentStock === 0 ? "var(--danger)" : GREEN, fontSize: "14px" }}>
-                  {isVirtualOutItemName(selected.itemName) ? "표시 재고(입−출)" : "현재고"} {currentStock}
+                  현재고 {currentStock}
                 </span>
               )}
             </div>
@@ -221,7 +213,7 @@ export default function StockOutPage() {
             <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양 (선택, 입고 품목과 동일 이름이면 수량만큼 출고)</div>
+          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양</div>
 
           <div style={{ marginBottom: "12px", padding: "12px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
@@ -289,7 +281,7 @@ export default function StockOutPage() {
                 </>
               ) : (
                 <>
-                  출고 완료 · <strong>{result.qty}</strong>대 등록 (모델: BT-400M/BF-400M 집계만, 카운터 없음)
+                  출고 완료 · <strong>{result.qty}</strong>대
                   {result.companions.map((c) => (
                     <span key={`${c.name}-${c.seqFrom}`}>
                       <br />

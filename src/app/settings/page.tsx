@@ -149,7 +149,7 @@ export default function SettingsPage() {
 
       {/* 추가모듈 옵션 */}
       <div style={card}>
-        <div style={sectionTitle}>추가모듈 선택 리스트 (GATE 전용)</div>
+        <div style={sectionTitle}>추가모듈</div>
         <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
           <input style={inputStyle} value={newAddon} onChange={e => setNewAddon(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleAddAddon("ADDON", newAddon)}
@@ -168,7 +168,7 @@ export default function SettingsPage() {
 
       {/* 세부사양 옵션 */}
       <div style={card}>
-        <div style={sectionTitle}>세부사양 선택 리스트 (GATE 전용)</div>
+        <div style={sectionTitle}>세부사양</div>
         <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
           <input style={inputStyle} value={newSpec} onChange={e => setNewSpec(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleAddAddon("SPEC", newSpec)}
