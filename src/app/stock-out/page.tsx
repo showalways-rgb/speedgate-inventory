@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PackageMinus, Puzzle, Ruler } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 
 interface AddonOption { id: number; type: string; value: string }
@@ -8,30 +9,56 @@ interface AddonOption { id: number; type: string; value: string }
 const today = () => new Date().toISOString().slice(0, 10);
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 
-const inputStyle: React.CSSProperties = {
+const input: React.CSSProperties = {
   width: "100%", padding: "10px 12px", border: "1px solid var(--border)",
-  borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--foreground)",
+  borderRadius: "10px", fontSize: "14px", outline: "none", color: "var(--foreground)",
+  background: "#fff",
 };
-const labelStyle: React.CSSProperties = {
-  display: "block", fontSize: "13px", fontWeight: 600,
+const label: React.CSSProperties = {
+  display: "block", fontSize: "12px", fontWeight: 600, letterSpacing: "0.02em",
   color: "var(--muted)", marginBottom: "6px",
 };
-const smInput: React.CSSProperties = {
-  width: "100%", padding: "8px 10px", border: "1px solid var(--border)",
-  borderRadius: "8px", fontSize: "13px", outline: "none", color: "var(--foreground)",
-};
-const smLabel: React.CSSProperties = {
-  display: "block", fontSize: "12px", fontWeight: 600,
-  color: "var(--muted)", marginBottom: "4px",
-};
+const smInput: React.CSSProperties = { ...input, padding: "9px 11px", fontSize: "13px", borderRadius: "8px" };
+const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom: "4px" };
 
-// ── 추가모듈/세부사양 단독 출고 패널 ──────────────────────────────
+const GREEN = "#16a34a";
+const GREEN_DARK = "#15803d";
+
+function CardHeader({
+  accent, icon: Icon, badge, title, desc,
+}: { accent: string; icon: React.ElementType; badge: string; title: string; desc: string }) {
+  return (
+    <div style={{ borderBottom: "1px solid var(--border)", padding: "18px 22px", background: "linear-gradient(180deg, #fafffb 0%, #fff 100%)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <div style={{
+          width: "44px", height: "44px", borderRadius: "11px",
+          background: accent, display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, boxShadow: "0 2px 8px rgba(22,163,74,0.2)",
+        }}>
+          <Icon size={21} color="white" strokeWidth={2} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>{badge}</span>
+          <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>{title}</div>
+          <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>{desc}</div>
+        </div>
+      </div>
+      <div style={{ height: "3px", background: accent, marginTop: "16px", marginLeft: "-22px", marginRight: "-22px", marginBottom: "-18px", borderRadius: "0 0 3px 3px" }} />
+    </div>
+  );
+}
+
 function AddonStockOutPanel({
-  title, categoryName, options,
+  title, subtitle, badge, accent, Icon, categoryName, options, submitLabel,
 }: {
   title: string;
+  subtitle: string;
+  badge: string;
+  accent: string;
+  Icon: React.ElementType;
   categoryName: string;
   options: AddonOption[];
+  submitLabel: string;
 }) {
   const [selected, setSelected] = useState("");
   const [customVal, setCustomVal] = useState("");
@@ -75,92 +102,92 @@ function AddonStockOutPanel({
   };
 
   return (
-    <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-      <div style={{ fontSize: "14px", fontWeight: 700, marginBottom: "14px" }}>{title} 단독 출고</div>
+    <div className="stock-card">
+      <CardHeader accent={accent} icon={Icon} badge={badge} title={title} desc={subtitle} />
+      <div style={{ padding: "18px 20px 20px" }}>
+        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>항목 선택</div>
+        <div style={{ padding: "10px 11px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0", minHeight: "44px" }}>
+          {options.length === 0 ? (
+            <span style={{ fontSize: "12px", color: "#cbd5e1" }}>설정 화면에서 목록을 추가하세요.</span>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+              {options.map(o => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => { setSelected(o.value); setCustomVal(""); }}
+                  style={{
+                    padding: "6px 13px", borderRadius: "999px", fontSize: "12px",
+                    border: `1px solid ${selected === o.value && !customVal ? accent : "var(--border)"}`,
+                    background: selected === o.value && !customVal ? `${accent}18` : "white",
+                    color: selected === o.value && !customVal ? accent : "var(--foreground)",
+                    fontWeight: selected === o.value && !customVal ? 600 : 500,
+                    cursor: "pointer", transition: "all 0.12s",
+                  }}
+                >
+                  {o.value}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "12px" }}>
-        {options.map(o => (
-          <button
-            key={o.id}
-            onClick={() => { setSelected(o.value); setCustomVal(""); }}
-            style={{
-              padding: "5px 12px", borderRadius: "20px", fontSize: "13px",
-              border: "1px solid",
-              borderColor: selected === o.value && !customVal ? "#48bb78" : "var(--border)",
-              background: selected === o.value && !customVal ? "#f0fff4" : "white",
-              color: selected === o.value && !customVal ? "#276749" : "var(--foreground)",
-              fontWeight: selected === o.value && !customVal ? 600 : 400,
-              cursor: "pointer", transition: "all 0.15s",
-            }}
-          >
-            {o.value}
-          </button>
-        ))}
+        <div style={{ marginTop: "12px" }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>직접 입력</div>
+          <input type="text" style={smInput} value={customVal} onChange={e => { setCustomVal(e.target.value); setSelected(""); }} placeholder="목록에 없을 때 이름을 적어 주세요." />
+        </div>
+
+        {value && (
+          <div style={{ marginTop: "12px", padding: "10px 12px", borderRadius: "8px", background: "#ecfdf5", border: "1px solid #86efac", fontSize: "12px", color: GREEN_DARK, fontWeight: 600 }}>
+            출고 대상 · {value}
+          </div>
+        )}
+
+        <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
+
+        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>금액·일자</div>
+        <div className="addon-form-row">
+          <div><label style={smLabel}>날짜</label><input type="date" style={smInput} value={date} onChange={e => setDate(e.target.value)} /></div>
+          <div><label style={smLabel}>수량</label><input type="number" min={1} style={smInput} value={quantity} onChange={e => setQuantity(e.target.value)} /></div>
+          <div><label style={smLabel}>단가 (원)</label><input type="text" inputMode="numeric" style={smInput} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="0" /></div>
+        </div>
+
+        {unitPrice > 0 && (
+          <div style={{ fontSize: "13px", color: accent, fontWeight: 700, marginTop: "8px", textAlign: "right" }}>합계 ₩{fmt(qty * unitPrice)}</div>
+        )}
+
+        <div style={{ marginTop: "12px" }}>
+          <label style={smLabel}>거래처 / 프로젝트명</label>
+          <input type="text" style={smInput} value={note} onChange={e => setNote(e.target.value)} placeholder="선택" />
+        </div>
+
+        {error && (
+          <div style={{ marginTop: "10px", fontSize: "12px", color: "#b91c1c", background: "#fef2f2", padding: "8px 10px", borderRadius: "8px", border: "1px solid #fecaca" }}>{error}</div>
+        )}
+        {result && (
+          <div style={{ marginTop: "10px", fontSize: "12px", color: "#065f46", background: "#ecfdf5", borderRadius: "8px", padding: "10px 12px", border: "1px solid #a7f3d0" }}>
+            출고 완료 · 카운터 <strong>{result.seqFrom} ~ {result.seqTo}</strong>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{
+            width: "100%", marginTop: "14px", padding: "11px", background: accent, color: "white",
+            border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 600,
+            cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.75 : 1,
+            boxShadow: `0 2px 8px ${accent}55`,
+          }}
+        >
+          {loading ? "처리 중..." : submitLabel}
+        </button>
       </div>
-
-      <div style={{ marginBottom: "12px" }}>
-        <input
-          type="text" style={smInput}
-          value={customVal}
-          onChange={e => { setCustomVal(e.target.value); setSelected(""); }}
-          placeholder="직접 입력"
-        />
-      </div>
-
-      {value && (
-        <div style={{ fontSize: "12px", color: "#276749", marginBottom: "10px", fontWeight: 600 }}>
-          출고 대상: {value}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "10px" }}>
-        <div>
-          <label style={smLabel}>날짜</label>
-          <input type="date" style={smInput} value={date} onChange={e => setDate(e.target.value)} />
-        </div>
-        <div>
-          <label style={smLabel}>수량</label>
-          <input type="number" min={1} style={smInput} value={quantity} onChange={e => setQuantity(e.target.value)} />
-        </div>
-        <div>
-          <label style={smLabel}>단가 (원)</label>
-          <input type="text" inputMode="numeric" style={smInput} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="0" />
-        </div>
-      </div>
-
-      {unitPrice > 0 && (
-        <div style={{ fontSize: "12px", color: "#48bb78", fontWeight: 700, marginBottom: "8px", textAlign: "right" }}>
-          합계 ₩{fmt(qty * unitPrice)}
-        </div>
-      )}
-
-      <div style={{ marginBottom: "12px" }}>
-        <input type="text" style={smInput} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처 / 프로젝트명" />
-      </div>
-
-      {error && <div style={{ fontSize: "12px", color: "#dc2626", marginBottom: "8px" }}>{error}</div>}
-      {result && (
-        <div style={{ fontSize: "12px", color: "#065f46", background: "#f0fff4", borderRadius: "6px", padding: "8px 10px", marginBottom: "8px" }}>
-          출고 완료! 카운터: <strong>{result.seqFrom} ~ {result.seqTo}</strong>
-        </div>
-      )}
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        style={{
-          width: "100%", padding: "10px", background: "#48bb78", color: "white",
-          border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600,
-          cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-        }}
-      >
-        {loading ? "처리 중..." : "출고 등록"}
-      </button>
     </div>
   );
 }
 
-// ── 메인 페이지 ──────────────────────────────────────────────────
 export default function StockOutPage() {
   const [selected, setSelected] = useState<{ categoryId: number; categoryName: string; subcategoryId: number; itemId: number; itemName: string } | null>(null);
   const [currentStock, setCurrentStock] = useState<number | null>(null);
@@ -230,91 +257,119 @@ export default function StockOutPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", marginBottom: "24px" }}>출고 등록 (FIFO)</h1>
+      <div style={{ marginBottom: "22px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: 800, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>출고 등록 · FIFO</h1>
+        <p style={{ fontSize: "14px", color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
+          모델은 선입선출로 처리되며, 추가모듈·세부사양은 별도 재고 단위로 출고합니다.
+        </p>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", alignItems: "start" }}>
-        {/* 왼쪽: 모델 출고 */}
-        <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "28px" }}>
-          <div style={{ fontSize: "14px", fontWeight: 700, marginBottom: "16px", color: "var(--foreground)" }}>모델 출고</div>
+      <div className="stock-register-grid">
+        <div className="stock-card">
+          <CardHeader
+            accent={GREEN}
+            icon={PackageMinus}
+            badge="Primary"
+            title="모델 출고"
+            desc="먼저 입고된 순서대로 자동 차감됩니다. 선택 후 현재고를 확인하세요."
+          />
+          <div style={{ padding: "22px 24px 24px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>품목 선택</div>
+            <CategorySelector key={selected === null ? "reset" : "filled"} onSelect={setSelected} />
 
-          <div style={{ marginBottom: "20px" }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--muted)", marginBottom: "10px" }}>품목 선택</div>
-            <CategorySelector
-              key={selected === null ? "reset" : "filled"}
-              onSelect={setSelected}
-            />
-          </div>
-
-          {selected && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f0f4ff", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px", fontSize: "13px" }}>
-              <span style={{ color: "var(--primary)" }}>
-                선택: <strong>{selected.categoryName} &gt; {selected.itemName}</strong>
-              </span>
-              {currentStock !== null && (
-                <span style={{ fontWeight: 700, color: currentStock === 0 ? "var(--danger)" : "var(--success)" }}>
-                  현재고 {currentStock}
+            {selected && (
+              <div style={{
+                marginTop: "14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "8px",
+                background: "linear-gradient(135deg, #ecfdf5 0%, #dcfce7 100%)",
+                borderRadius: "10px", padding: "12px 14px", border: "1px solid #86efac",
+              }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: GREEN_DARK }}>
+                  {selected.categoryName} <span style={{ opacity: 0.5 }}>›</span> {selected.itemName}
                 </span>
-              )}
-            </div>
-          )}
+                {currentStock !== null && (
+                  <span style={{ fontWeight: 800, color: currentStock === 0 ? "var(--danger)" : GREEN, fontSize: "14px" }}>
+                    현재고 {currentStock}
+                  </span>
+                )}
+              </div>
+            )}
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={labelStyle}>출고일</label>
-            <input type="date" style={inputStyle} value={date} onChange={e => setDate(e.target.value)} />
+            <div style={{ height: "1px", background: "var(--border)", margin: "20px 0" }} />
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={label}>출고일</label>
+              <input type="date" style={input} value={date} onChange={e => setDate(e.target.value)} />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
+              <div><label style={label}>수량</label><input type="number" min={1} style={input} value={quantity} onChange={e => setQuantity(e.target.value)} /></div>
+              <div><label style={label}>단가 (원)</label><input type="text" inputMode="numeric" style={input} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="선택 입력" /></div>
+            </div>
+
+            {unitPrice > 0 && (
+              <div style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px 16px", marginBottom: "14px", display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "13px", color: "var(--muted)" }}>합계 금액</span>
+                <span style={{ fontSize: "17px", fontWeight: 800, color: GREEN }}>₩{fmt(qty * unitPrice)}</span>
+              </div>
+            )}
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={label}>거래처 / 프로젝트명</label>
+              <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
+            </div>
+
+            {error && (
+              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", borderRadius: "10px", padding: "11px 14px", fontSize: "13px", marginBottom: "14px" }}>{error}</div>
+            )}
+
+            {result && (
+              <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", borderRadius: "10px", padding: "11px 14px", fontSize: "13px", marginBottom: "14px" }}>
+                출고 완료 · 카운터 <strong>{result.seqFrom} ~ {result.seqTo}</strong> (선입선출)
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                width: "100%", padding: "14px", background: GREEN, color: "white",
+                border: "none", borderRadius: "11px", fontSize: "15px", fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.75 : 1,
+                boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
+              }}
+            >
+              {loading ? "처리 중…" : "모델 출고 등록"}
+            </button>
           </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-            <div>
-              <label style={labelStyle}>수량</label>
-              <input type="number" min={1} style={inputStyle} value={quantity} onChange={e => setQuantity(e.target.value)} />
-            </div>
-            <div>
-              <label style={labelStyle}>단가 (원)</label>
-              <input type="text" inputMode="numeric" style={inputStyle} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="0" />
-            </div>
-          </div>
-
-          {unitPrice > 0 && (
-            <div style={{ background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "13px", color: "var(--muted)" }}>합계 금액</span>
-              <span style={{ fontSize: "16px", fontWeight: 700, color: "#48bb78" }}>₩{fmt(qty * unitPrice)}</span>
-            </div>
-          )}
-
-          <div style={{ marginBottom: "16px" }}>
-            <label style={labelStyle}>거래처 / 프로젝트명</label>
-            <input type="text" style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
-          </div>
-
-          {error && (
-            <div style={{ background: "#fff5f5", border: "1px solid #fca5a5", color: "#dc2626", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", marginBottom: "16px" }}>
-              {error}
-            </div>
-          )}
-
-          {result && (
-            <div style={{ background: "#f0fff4", border: "1px solid #6ee7b7", color: "#065f46", borderRadius: "8px", padding: "10px 14px", fontSize: "13px", marginBottom: "16px" }}>
-              출고 완료! 카운터: <strong>{result.seqFrom} ~ {result.seqTo}</strong> (선입선출)
-            </div>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              width: "100%", padding: "12px", background: "#48bb78", color: "white",
-              border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? "처리 중..." : "출고 등록"}
-          </button>
         </div>
 
-        {/* 오른쪽: 추가모듈/세부사양 단독 출고 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <AddonStockOutPanel title="추가모듈" categoryName="추가모듈" options={addonOptions} />
-          <AddonStockOutPanel title="세부사양" categoryName="세부사양" options={specOptions} />
+        <div className="stock-side-stack">
+          <AddonStockOutPanel
+            title="추가모듈 단독 출고"
+            subtitle="해당 이름으로 입고된 재고가 있을 때만 출고됩니다."
+            badge="Standalone"
+            accent="#6366f1"
+            Icon={Puzzle}
+            categoryName="추가모듈"
+            options={addonOptions}
+            submitLabel="추가모듈 출고 등록"
+          />
+          <AddonStockOutPanel
+            title="세부사양 단독 출고"
+            subtitle="선입선출 규칙이 동일하게 적용됩니다."
+            badge="Standalone"
+            accent="#0d9488"
+            Icon={Ruler}
+            categoryName="세부사양"
+            options={specOptions}
+            submitLabel="세부사양 출고 등록"
+          />
         </div>
       </div>
     </div>
