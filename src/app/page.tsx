@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import StockChart from "@/components/StockChart";
-import AiSearch from "@/components/AiSearch";
 
 interface StockItem {
   itemId: number; itemName: string; subcategoryName: string;
@@ -82,8 +81,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* AI 검색 */}
-      <AiSearch />
     </div>
   );
 }
