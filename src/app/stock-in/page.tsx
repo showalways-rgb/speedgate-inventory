@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Package, Puzzle, Ruler } from "lucide-react";
+import { Package, Puzzle } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 
 interface AddonOption { id: number; type: string; value: string }
@@ -85,7 +85,7 @@ function AddonStockInPanel({
   };
 
   const handleSubmit = async () => {
-    if (!value.trim()) { setError("값을 선택하거나 직접 입력하세요."); return; }
+    if (!value.trim()) { setError("항목을 선택하거나 메모를 입력하세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
     setLoading(true); setError(""); setResult(null);
     try {
@@ -116,9 +116,9 @@ function AddonStockInPanel({
           border: "1px solid #e2e8f0", minHeight: "44px",
         }}>
           {options.length === 0 ? (
-            <span style={{ fontSize: "12px", color: "#cbd5e1" }}>목록 없음</span>
+            <span style={{ fontSize: "12px", color: "#cbd5e1", display: "block", marginBottom: "10px" }}>목록 없음</span>
           ) : (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "10px" }}>
               {options.map(o => (
                 <button
                   key={o.id}
@@ -138,16 +138,20 @@ function AddonStockInPanel({
               ))}
             </div>
           )}
-        </div>
-
-        <div style={{ marginTop: "12px" }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>직접 입력</div>
-          <input
-            type="text" style={{ ...smInput }}
-            value={customVal}
-            onChange={e => { setCustomVal(e.target.value); setSelected(""); }}
-            placeholder=""
-          />
+          <div style={{ borderTop: "1px dashed #e2e8f0", paddingTop: "10px" }}>
+            <textarea
+              rows={2}
+              value={customVal}
+              onChange={e => { setCustomVal(e.target.value); setSelected(""); }}
+              placeholder=""
+              style={{
+                width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: "44px", maxHeight: "120px",
+                padding: "9px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px",
+                color: "var(--foreground)", background: "#fff",
+                outline: "none", fontFamily: "inherit", lineHeight: 1.45,
+              }}
+            />
+          </div>
         </div>
 
         <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
@@ -207,14 +211,12 @@ export default function StockInPage() {
   const [result, setResult] = useState<{ seqFrom: number; seqTo: number } | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
-  const [specOptions, setSpecOptions] = useState<AddonOption[]>([]);
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
 
   useEffect(() => {
     fetch("/api/addon-options?type=ADDON").then(r => r.json()).then(setAddonOptions);
-    fetch("/api/addon-options?type=SPEC").then(r => r.json()).then(setSpecOptions);
   }, []);
 
   const handlePriceChange = (val: string) => {
@@ -342,15 +344,6 @@ export default function StockInPage() {
             categoryName="추가모듈"
             options={addonOptions}
             submitLabel="추가모듈 입고 등록"
-          />
-          <AddonStockInPanel
-            title="세부사양 입고"
-            badge="Standalone"
-            accent="#0d9488"
-            Icon={Ruler}
-            categoryName="세부사양"
-            options={specOptions}
-            submitLabel="세부사양 입고 등록"
           />
         </div>
       </div>

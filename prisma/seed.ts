@@ -56,10 +56,12 @@ const SEED_DATA = [
 ];
 
 const ADDON_OPTIONS = [
-  { type: "ADDON", value: "케이블 덕트", order: 1 },
-  { type: "ADDON", value: "이동식플레이트(BT-400M)", order: 2 },
-  { type: "ADDON", value: "이동식플레이트(BF-400M)", order: 3 },
-  { type: "ADDON", value: "Fence(SUS)", order: 4 },
+  { type: "ADDON", value: "케이블덕트(BT-400용_710mm)", order: 1 },
+  { type: "ADDON", value: "케이블덕트(BT-500용_540mm)", order: 2 },
+  { type: "ADDON", value: "케이블덕트(BF-400용_800mm)", order: 3 },
+  { type: "ADDON", value: "이동식플레이트(BT-400M)", order: 4 },
+  { type: "ADDON", value: "이동식플레이트(BF-400M)", order: 5 },
+  { type: "ADDON", value: "Fence(SUS)", order: 6 },
 ];
 
 const SPEC_OPTIONS = [
@@ -98,7 +100,10 @@ async function main() {
   }
 
   await prisma.addonOption.deleteMany({
-    where: { type: "ADDON", value: "이동식플레이트" },
+    where: {
+      type: "ADDON",
+      value: { in: ["이동식플레이트", "케이블 덕트"] },
+    },
   });
 
   for (const opt of [...ADDON_OPTIONS, ...SPEC_OPTIONS]) {
