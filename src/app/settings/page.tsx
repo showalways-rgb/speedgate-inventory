@@ -37,7 +37,6 @@ export default function SettingsPage() {
   const [specOptions, setSpecOptions] = useState<AddonOption[]>([]);
   const [newAddon, setNewAddon] = useState("");
   const [newSpec, setNewSpec] = useState("");
-  const [resetting, setResetting] = useState(false);
   const [itemMsg, setItemMsg] = useState("");
 
   const loadCategories = useCallback(async () => {
@@ -107,14 +106,6 @@ export default function SettingsPage() {
     loadAddonOptions();
   };
 
-  const handleReset = async () => {
-    if (!confirm("⚠️ 모든 입출고 내역과 카운터 데이터가 삭제됩니다. 계속하시겠습니까?")) return;
-    if (!confirm("정말로 삭제하시겠습니까? 복구할 수 없습니다.")) return;
-    setResetting(true);
-    await fetch("/api/reset", { method: "POST" });
-    setResetting(false);
-    alert("데이터가 초기화되었습니다.");
-  };
 
   const isShelterCat = categories.find(c => c.id === selectedCatId)?.name === "쉼터";
 
@@ -194,21 +185,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* DB 초기화 */}
-      <div style={{ ...card, borderColor: "#fca5a5" }}>
-        <div style={{ ...sectionTitle, color: "#dc2626" }}>데이터 초기화</div>
-        <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.7 }}>
-          입출고 내역과 카운터 데이터를 전부 삭제합니다. 품목 구성(대분류·소분류·모델)은 유지됩니다.
-          <br />이 작업은 되돌릴 수 없습니다.
-        </p>
-        <button
-          onClick={handleReset}
-          disabled={resetting}
-          style={{ padding: "10px 20px", background: "#dc2626", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: resetting ? "not-allowed" : "pointer", opacity: resetting ? 0.7 : 1 }}
-        >
-          {resetting ? "초기화 중..." : "입출고 내역 초기화"}
-        </button>
-      </div>
     </div>
   );
 }
