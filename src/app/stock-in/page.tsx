@@ -61,8 +61,8 @@ export default function StockInPage() {
           quantity: qty,
           price: unitPrice || null,
           note: note || null,
-          addon: isGate ? (addon || null) : null,
-          spec: isGate ? (spec || null) : null,
+          addon: addon || null,
+          spec: spec || null,
           date,
         }),
       });
@@ -133,8 +133,8 @@ export default function StockInPage() {
             <input type="text" style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          {/* GATE 전용: 선택된 값 표시 */}
-          {isGate && (addon || spec) && (
+          {/* 선택된 추가모듈/세부사양 표시 */}
+          {(addon || spec) && (
             <div style={{ background: "#f0f4ff", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px", fontSize: "13px" }}>
               {addon && <div>추가모듈: <strong>{addon}</strong></div>}
               {spec && <div>세부사양: <strong>{spec}</strong></div>}
@@ -170,21 +170,17 @@ export default function StockInPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* 추가모듈 */}
           <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>추가모듈</div>
-            <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "14px" }}>GATE 품목일 때 적용됩니다</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "14px" }}>추가모듈</div>
 
-            {/* 직접 입력 */}
             <div style={{ marginBottom: "12px" }}>
               <input
                 type="text" style={{ ...inputStyle, fontSize: "13px" }}
                 value={addon}
                 onChange={e => setAddon(e.target.value)}
                 placeholder="직접 입력"
-                disabled={!isGate}
               />
             </div>
 
-            {/* 선택 리스트 */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {addonOptions.length === 0 && (
                 <span style={{ fontSize: "12px", color: "#cbd5e0" }}>설정에서 리스트를 추가하세요</span>
@@ -192,7 +188,6 @@ export default function StockInPage() {
               {addonOptions.map(o => (
                 <button
                   key={o.id}
-                  disabled={!isGate}
                   onClick={() => setAddon(prev => prev === o.value ? "" : o.value)}
                   style={{
                     padding: "6px 12px", borderRadius: "20px", fontSize: "13px",
@@ -201,8 +196,7 @@ export default function StockInPage() {
                     background: addon === o.value ? "#eef2ff" : "white",
                     color: addon === o.value ? "var(--primary)" : "var(--foreground)",
                     fontWeight: addon === o.value ? 600 : 400,
-                    cursor: isGate ? "pointer" : "not-allowed",
-                    opacity: isGate ? 1 : 0.4,
+                    cursor: "pointer",
                     transition: "all 0.15s",
                   }}
                 >
@@ -214,21 +208,17 @@ export default function StockInPage() {
 
           {/* 세부사양 */}
           <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>세부사양</div>
-            <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "14px" }}>GATE 품목일 때 적용됩니다</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "14px" }}>세부사양</div>
 
-            {/* 직접 입력 */}
             <div style={{ marginBottom: "12px" }}>
               <input
                 type="text" style={{ ...inputStyle, fontSize: "13px" }}
                 value={spec}
                 onChange={e => setSpec(e.target.value)}
                 placeholder="직접 입력"
-                disabled={!isGate}
               />
             </div>
 
-            {/* 선택 리스트 */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {specOptions.length === 0 && (
                 <span style={{ fontSize: "12px", color: "#cbd5e0" }}>설정에서 리스트를 추가하세요</span>
@@ -236,7 +226,6 @@ export default function StockInPage() {
               {specOptions.map(o => (
                 <button
                   key={o.id}
-                  disabled={!isGate}
                   onClick={() => setSpec(prev => prev === o.value ? "" : o.value)}
                   style={{
                     padding: "6px 12px", borderRadius: "20px", fontSize: "13px",
@@ -245,8 +234,7 @@ export default function StockInPage() {
                     background: spec === o.value ? "#eef2ff" : "white",
                     color: spec === o.value ? "var(--primary)" : "var(--foreground)",
                     fontWeight: spec === o.value ? 600 : 400,
-                    cursor: isGate ? "pointer" : "not-allowed",
-                    opacity: isGate ? 1 : 0.4,
+                    cursor: "pointer",
                     transition: "all 0.15s",
                   }}
                 >

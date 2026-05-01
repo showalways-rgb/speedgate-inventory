@@ -75,8 +75,8 @@ export default function StockOutPage() {
           quantity: qty,
           price: unitPrice || null,
           note: note || null,
-          addon: isGate ? (addon || null) : null,
-          spec: isGate ? (spec || null) : null,
+          addon: addon || null,
+          spec: spec || null,
           date,
         }),
       });
@@ -155,8 +155,7 @@ export default function StockOutPage() {
             <input type="text" style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          {/* GATE 전용: 선택된 값 표시 */}
-          {isGate && (addon || spec) && (
+          {(addon || spec) && (
             <div style={{ background: "#f0f4ff", borderRadius: "8px", padding: "10px 14px", marginBottom: "16px", fontSize: "13px" }}>
               {addon && <div>추가모듈: <strong>{addon}</strong></div>}
               {spec && <div>세부사양: <strong>{spec}</strong></div>}
@@ -192,8 +191,7 @@ export default function StockOutPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* 추가모듈 */}
           <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>추가모듈</div>
-            <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "14px" }}>GATE 품목일 때 적용됩니다</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "14px" }}>추가모듈</div>
 
             <div style={{ marginBottom: "12px" }}>
               <input
@@ -201,7 +199,6 @@ export default function StockOutPage() {
                 value={addon}
                 onChange={e => setAddon(e.target.value)}
                 placeholder="직접 입력"
-                disabled={!isGate}
               />
             </div>
 
@@ -212,7 +209,6 @@ export default function StockOutPage() {
               {addonOptions.map(o => (
                 <button
                   key={o.id}
-                  disabled={!isGate}
                   onClick={() => setAddon(prev => prev === o.value ? "" : o.value)}
                   style={{
                     padding: "6px 12px", borderRadius: "20px", fontSize: "13px",
@@ -221,8 +217,7 @@ export default function StockOutPage() {
                     background: addon === o.value ? "#f0fff4" : "white",
                     color: addon === o.value ? "#276749" : "var(--foreground)",
                     fontWeight: addon === o.value ? 600 : 400,
-                    cursor: isGate ? "pointer" : "not-allowed",
-                    opacity: isGate ? 1 : 0.4,
+                    cursor: "pointer",
                     transition: "all 0.15s",
                   }}
                 >
@@ -234,8 +229,7 @@ export default function StockOutPage() {
 
           {/* 세부사양 */}
           <div style={{ background: "white", border: "1px solid var(--border)", borderRadius: "12px", padding: "20px" }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>세부사양</div>
-            <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "14px" }}>GATE 품목일 때 적용됩니다</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "14px" }}>세부사양</div>
 
             <div style={{ marginBottom: "12px" }}>
               <input
@@ -243,7 +237,6 @@ export default function StockOutPage() {
                 value={spec}
                 onChange={e => setSpec(e.target.value)}
                 placeholder="직접 입력"
-                disabled={!isGate}
               />
             </div>
 
@@ -254,7 +247,6 @@ export default function StockOutPage() {
               {specOptions.map(o => (
                 <button
                   key={o.id}
-                  disabled={!isGate}
                   onClick={() => setSpec(prev => prev === o.value ? "" : o.value)}
                   style={{
                     padding: "6px 12px", borderRadius: "20px", fontSize: "13px",
@@ -263,8 +255,7 @@ export default function StockOutPage() {
                     background: spec === o.value ? "#f0fff4" : "white",
                     color: spec === o.value ? "#276749" : "var(--foreground)",
                     fontWeight: spec === o.value ? 600 : 400,
-                    cursor: isGate ? "pointer" : "not-allowed",
-                    opacity: isGate ? 1 : 0.4,
+                    cursor: "pointer",
                     transition: "all 0.15s",
                   }}
                 >
