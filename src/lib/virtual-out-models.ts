@@ -10,20 +10,8 @@ export function isVirtualOutItemName(name: string): boolean {
   return VIRTUAL_OUT_ITEM_NAMES.has(normalizeVirtualOutItemName(name));
 }
 
-/** 파생 M 출고 1대당 출고 수량·건수를 합산할 본체 품목명 (재고/FIFO는 그대로, 집계만 가산) */
-export const VIRTUAL_OUT_CROSS_COUNT_SOURCES = ["BT-400M", "BF-400M"] as const;
-
-export function extraVirtualOutCountForItem(
-  itemName: string,
-  statsBySourceName: Record<string, { qty: number; txCount: number }>
-): { extraQty: number; extraTxCount: number } {
-  const btM = statsBySourceName["BT-400M"];
-  const bfM = statsBySourceName["BF-400M"];
-  if (itemName === "BT-400" && btM) {
-    return { extraQty: btM.qty, extraTxCount: btM.txCount };
-  }
-  if ((itemName === "BF-400 Master" || itemName === "BF-400 Slave") && bfM) {
-    return { extraQty: bfM.qty, extraTxCount: bfM.txCount };
-  }
-  return { extraQty: 0, extraTxCount: 0 };
-}
+/** 가상 출고(M) 시 FIFO로 차감할 본체 품목명 (품목명 → 부모 이름 배열) */
+export const VIRTUAL_OUT_PARENT_ITEMS: Record<string, string[]> = {
+  "BT-400M": ["BT-400"],
+  "BF-400M": ["BF-400 Master", "BF-400 Slave"],
+};

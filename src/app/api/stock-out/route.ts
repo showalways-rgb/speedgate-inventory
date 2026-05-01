@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fifoStockOut, currentStock } from "@/lib/fifo";
-import { isVirtualOutItemName } from "@/lib/virtual-out-models";
+import {
+  isVirtualOutItemName,
+  normalizeVirtualOutItemName,
+  VIRTUAL_OUT_PARENT_ITEMS,
+} from "@/lib/virtual-out-models";
 
 type CompanionMeta = { label: string; role: "addon" | "spec" };
 
@@ -57,7 +61,36 @@ export async function POST(req: Request) {
 
   const virtual = isVirtualOutItemName(item.name);
 
-  if (!virtual) {
+  /** 가상 출고 시 FIFO 차감할 본체 품목 id (트랜잭션 안에서 순서대로 차감) */
+  let virtualParentItemIds: number[] = [];
+
+  if (virtual) {
+    const key = normalizeVirtualOutItemName(item.name);
+    const parentNames = VIRTUAL_OUT_PARENT_ITEMS[key];
+    if (!parentNames?.length) {
+      return NextResponse.json(
+        { error: `가상 출고 모델「${item.name}」에 연결된 본체 품목 매핑이 없습니다.` },
+        { status: 400 }
+      );
+    }
+    for (const parentName of parentNames) {
+      const parent = await prisma.item.findUnique({ where: { name: parentName } });
+      if (!parent) {
+        return NextResponse.json(
+          { error: `본체 품목「${parentName}」을(를) 찾을 수 없습니다. 먼저 입고 등록해 주세요.` },
+          { status: 400 }
+        );
+      }
+      const s = await currentStock(parent.id);
+      if (s < qty) {
+        return NextResponse.json(
+          { error: `「${parentName}」재고 부족: 현재 IN_STOCK ${s}개, 요청 ${qty}개` },
+          { status: 400 }
+        );
+      }
+      virtualParentItemIds.push(parent.id);
+    }
+  } else {
     const stock = await currentStock(Number(itemId));
     if (stock < qty) {
       return NextResponse.json(
@@ -97,7 +130,11 @@ export async function POST(req: Request) {
           },
         });
 
-        if (!virtual) {
+        if (virtual) {
+          for (const parentId of virtualParentItemIds) {
+            await fifoStockOut(parentId, qty, mainTx.id, tx);
+          }
+        } else {
           await fifoStockOut(Number(itemId), qty, mainTx.id, tx);
         }
 

@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  extraVirtualOutCountForItem,
-  isVirtualOutItemName,
-  VIRTUAL_OUT_CROSS_COUNT_SOURCES,
-} from "@/lib/virtual-out-models";
+import { isVirtualOutItemName } from "@/lib/virtual-out-models";
 
 export const revalidate = 30;
 
@@ -12,37 +8,15 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const categoryId = searchParams.get("categoryId") ? Number(searchParams.get("categoryId")) : undefined;
 
-  const [crossSourceItems, items] = await Promise.all([
-    prisma.item.findMany({
-      where: { name: { in: [...VIRTUAL_OUT_CROSS_COUNT_SOURCES] } },
-      select: { id: true, name: true },
-    }),
-    prisma.item.findMany({
-      where: categoryId ? { subcategory: { categoryId } } : undefined,
-      include: { subcategory: { include: { category: true } } },
-      orderBy: { id: "asc" },
-    }),
-  ]);
-
-  const crossIds = crossSourceItems.map((i) => i.id);
-  const idToCrossName = Object.fromEntries(crossSourceItems.map((i) => [i.id, i.name])) as Record<
-    number,
-    (typeof VIRTUAL_OUT_CROSS_COUNT_SOURCES)[number]
-  >;
+  const items = await prisma.item.findMany({
+    where: categoryId ? { subcategory: { categoryId } } : undefined,
+    include: { subcategory: { include: { category: true } } },
+    orderBy: { id: "asc" },
+  });
 
   const itemIds = items.map((i) => i.id);
 
-  const statsBySourceName: Record<string, { qty: number; txCount: number }> = {};
-
-  const [crossOutGrouped, inGrouped, counterGrouped, outGrouped] = await Promise.all([
-    crossIds.length > 0
-      ? prisma.transaction.groupBy({
-          by: ["itemId"],
-          where: { type: "OUT", itemId: { in: crossIds } },
-          _sum: { quantity: true },
-          _count: { id: true },
-        })
-      : Promise.resolve([]),
+  const [inGrouped, counterGrouped, outGrouped] = await Promise.all([
     itemIds.length > 0
       ? prisma.transaction.groupBy({
           by: ["itemId"],
@@ -66,15 +40,6 @@ export async function GET(req: Request) {
         })
       : Promise.resolve([]),
   ]);
-
-  for (const row of crossOutGrouped) {
-    const n = idToCrossName[row.itemId];
-    if (!n) continue;
-    statsBySourceName[n] = {
-      qty: row._sum.quantity ?? 0,
-      txCount: row._count.id,
-    };
-  }
 
   const totalInMap = new Map<number, number>();
   for (const row of inGrouped) {
@@ -116,9 +81,7 @@ export async function GET(req: Request) {
     }
 
     const counterStock = counterStockMap.get(item.id) ?? 0;
-    const baseOut = totalIn - counterStock;
-    const { extraQty, extraTxCount } = extraVirtualOutCountForItem(item.name, statsBySourceName);
-    const totalOut = baseOut + extraQty;
+    const totalOut = totalIn - counterStock;
 
     return {
       itemId: item.id,
@@ -130,7 +93,7 @@ export async function GET(req: Request) {
       totalOut,
       currentStock: counterStock,
       virtualOut: false,
-      outOrderCount: outCount + extraTxCount,
+      outOrderCount: outCount,
     };
   });
 
