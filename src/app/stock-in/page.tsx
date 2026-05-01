@@ -18,8 +18,6 @@ const label: React.CSSProperties = {
   display: "block", fontSize: "12px", fontWeight: 600, letterSpacing: "0.02em",
   color: "var(--muted)", marginBottom: "6px",
 };
-const smInput: React.CSSProperties = { ...input, padding: "9px 11px", fontSize: "13px", borderRadius: "8px" };
-const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom: "4px" };
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
@@ -54,6 +52,18 @@ function CardHeader({
   );
 }
 
+function sortOptions(opts: AddonOption[]): AddonOption[] {
+  const order = ["이동식플레이트", "브라켓", "케이블덕트"];
+  return [...opts].sort((a, b) => {
+    const ai = order.findIndex((k) => a.value.startsWith(k));
+    const bi = order.findIndex((k) => b.value.startsWith(k));
+    const ap = ai === -1 ? order.length : ai;
+    const bp = bi === -1 ? order.length : bi;
+    if (ap !== bp) return ap - bp;
+    return a.value.localeCompare(b.value, "ko");
+  });
+}
+
 function AddonStockInPanel({
   title, badge, accent, Icon, categoryName, options, submitLabel,
 }: {
@@ -66,7 +76,6 @@ function AddonStockInPanel({
   submitLabel: string;
 }) {
   const [selected, setSelected] = useState("");
-  const [customVal, setCustomVal] = useState("");
   const [date, setDate] = useState(today());
   const [quantity, setQuantity] = useState("1");
   const [price, setPrice] = useState("");
@@ -75,7 +84,7 @@ function AddonStockInPanel({
   const [result, setResult] = useState<{ seqFrom: number; seqTo: number } | null>(null);
   const [error, setError] = useState("");
 
-  const value = customVal || selected;
+  const value = selected;
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
 
@@ -85,7 +94,7 @@ function AddonStockInPanel({
   };
 
   const handleSubmit = async () => {
-    if (!value.trim()) { setError("항목을 선택하거나 메모를 입력하세요."); return; }
+    if (!value.trim()) { setError("항목을 선택해주세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
     setLoading(true); setError(""); setResult(null);
     try {
@@ -98,7 +107,7 @@ function AddonStockInPanel({
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
       const counters: { seq: number }[] = data.counters;
       setResult({ seqFrom: counters[0].seq, seqTo: counters[counters.length - 1].seq });
-      setSelected(""); setCustomVal(""); setQuantity("1"); setPrice(""); setNote("");
+      setSelected(""); setQuantity("1"); setPrice(""); setNote("");
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -109,58 +118,48 @@ function AddonStockInPanel({
   return (
     <div className="stock-card">
       <CardHeader accent={accent} icon={Icon} badge={badge} title={title} />
-      <div style={{ padding: "18px 20px 20px" }}>
-        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>항목 선택</div>
-        <div style={{
-          padding: "10px 11px", background: "#f8fafc", borderRadius: "10px",
-          border: "1px solid #e2e8f0", minHeight: "44px",
-        }}>
-          {options.length === 0 ? (
-            <span style={{ fontSize: "12px", color: "#cbd5e1", display: "block", marginBottom: "10px" }}>목록 없음</span>
-          ) : (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "10px" }}>
-              {options.map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => { setSelected(o.value); setCustomVal(""); }}
-                  style={{
-                    padding: "6px 13px", borderRadius: "999px", fontSize: "12px",
-                    border: `1px solid ${selected === o.value && !customVal ? accent : "var(--border)"}`,
-                    background: selected === o.value && !customVal ? `${accent}18` : "white",
-                    color: selected === o.value && !customVal ? accent : "var(--foreground)",
-                    fontWeight: selected === o.value && !customVal ? 600 : 500,
-                    cursor: "pointer", transition: "all 0.12s",
-                  }}
-                >
-                  {o.value}
-                </button>
-              ))}
-            </div>
-          )}
-          <div style={{ borderTop: "1px dashed #e2e8f0", paddingTop: "10px" }}>
-            <textarea
-              rows={2}
-              value={customVal}
-              onChange={e => { setCustomVal(e.target.value); setSelected(""); }}
-              placeholder=""
-              style={{
-                width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: "44px", maxHeight: "120px",
-                padding: "9px 10px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px",
-                color: "var(--foreground)", background: "#fff",
-                outline: "none", fontFamily: "inherit", lineHeight: 1.45,
-              }}
-            />
+      <div style={{ padding: "22px 24px 24px" }}>
+        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>항목 선택</div>
+        {options.length === 0 ? (
+          <span style={{ fontSize: "12px", color: "#cbd5e1", display: "block", marginBottom: "14px" }}>목록 없음</span>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px" }}>
+            {sortOptions(options).map(o => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setSelected(o.value)}
+                style={{
+                  padding: "6px 13px", borderRadius: "999px", fontSize: "12px",
+                  border: `1px solid ${selected === o.value ? accent : "var(--border)"}`,
+                  background: selected === o.value ? `${accent}18` : "white",
+                  color: selected === o.value ? accent : "var(--foreground)",
+                  fontWeight: selected === o.value ? 600 : 500,
+                  cursor: "pointer", transition: "all 0.12s",
+                }}
+              >
+                {o.value}
+              </button>
+            ))}
           </div>
-        </div>
+        )}
 
-        <div style={{ height: "1px", background: "var(--border)", margin: "16px 0" }} />
+        <div style={{ height: "1px", background: "var(--border)", margin: "20px 0" }} />
 
-        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>금액·일자</div>
+        <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>금액·일자</div>
         <div className="addon-form-row">
-          <div><label style={smLabel}>날짜</label><input type="date" style={smInput} value={date} onChange={e => setDate(e.target.value)} /></div>
-          <div><label style={smLabel}>수량</label><input type="number" min={1} style={smInput} value={quantity} onChange={e => setQuantity(e.target.value)} /></div>
-          <div><label style={smLabel}>단가 (원)</label><input type="text" inputMode="numeric" style={smInput} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="0" /></div>
+          <div>
+            <label style={label}>날짜</label>
+            <input type="date" style={input} value={date} onChange={e => setDate(e.target.value)} />
+          </div>
+          <div>
+            <label style={label}>수량</label>
+            <input type="number" min={1} style={input} value={quantity} onChange={e => setQuantity(e.target.value)} />
+          </div>
+          <div>
+            <label style={label}>단가 (원)</label>
+            <input type="text" inputMode="numeric" style={input} value={price} onChange={e => handlePriceChange(e.target.value)} placeholder="선택 입력" />
+          </div>
         </div>
 
         {unitPrice > 0 && (
@@ -169,9 +168,9 @@ function AddonStockInPanel({
           </div>
         )}
 
-        <div style={{ marginTop: "12px" }}>
-          <label style={smLabel}>거래처 / 프로젝트명</label>
-          <input type="text" style={smInput} value={note} onChange={e => setNote(e.target.value)} placeholder="선택" />
+        <div style={{ marginTop: "12px", marginBottom: "14px" }}>
+          <label style={label}>거래처 / 프로젝트명</label>
+          <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
         </div>
 
         {error && (
