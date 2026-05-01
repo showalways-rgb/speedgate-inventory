@@ -24,7 +24,6 @@ const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom:
 const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
 const ADDON_ACCENT = "#6366f1";
-const SPEC_ACCENT = "#0d9488";
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
@@ -72,7 +71,6 @@ export default function StockOutPage() {
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
   const [addon, setAddon] = useState("");
-  const [spec, setSpec] = useState("");
   const [loading, setLoading] = useState(false);
   type CompanionRange = { name: string; seqFrom: number; seqTo: number };
   type StockOutResult =
@@ -81,14 +79,12 @@ export default function StockOutPage() {
   const [result, setResult] = useState<StockOutResult | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
-  const [specOptions, setSpecOptions] = useState<AddonOption[]>([]);
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
 
   useEffect(() => {
     fetch("/api/addon-options?type=ADDON").then(r => r.json()).then(setAddonOptions);
-    fetch("/api/addon-options?type=SPEC").then(r => r.json()).then(setSpecOptions);
   }, []);
 
   useEffect(() => {
@@ -127,7 +123,7 @@ export default function StockOutPage() {
           price: unitPrice || null,
           note: note || null,
           addon: addon.trim() || null,
-          spec: spec.trim() || null,
+          spec: null,
           date,
         }),
       });
@@ -157,7 +153,7 @@ export default function StockOutPage() {
         });
         setCurrentStock(prev => (prev ?? 0) - qty);
       }
-      setQuantity("1"); setPrice(""); setNote(""); setAddon(""); setSpec("");
+      setQuantity("1"); setPrice(""); setNote(""); setAddon("");
       setSelected(null);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -224,9 +220,9 @@ export default function StockOutPage() {
             <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양</div>
+          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈</div>
 
-          <div style={{ marginBottom: "12px" }}>
+          <div style={{ marginBottom: "14px" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
               {sortOptions(addonOptions).map(o => (
@@ -240,29 +236,6 @@ export default function StockOutPage() {
                     background: addon === o.value ? `${ADDON_ACCENT}15` : "white",
                     color: addon === o.value ? ADDON_ACCENT : "var(--foreground)",
                     fontWeight: addon === o.value ? 600 : 500,
-                    cursor: "pointer",
-                  }}
-                >
-                  {o.value}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ ...smLabel, color: SPEC_ACCENT }}>세부사양</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-              {sortOptions(specOptions).map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => setSpec(prev => prev === o.value ? "" : o.value)}
-                  style={{
-                    padding: "5px 12px", borderRadius: "999px", fontSize: "12px",
-                    border: `1px solid ${spec === o.value ? SPEC_ACCENT : "var(--border)"}`,
-                    background: spec === o.value ? `${SPEC_ACCENT}18` : "white",
-                    color: spec === o.value ? SPEC_ACCENT : "var(--foreground)",
-                    fontWeight: spec === o.value ? 600 : 500,
                     cursor: "pointer",
                   }}
                 >
