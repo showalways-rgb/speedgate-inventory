@@ -57,7 +57,7 @@ export default function CategorySelector({ onSelect, initialCategoryId, initialS
     const cat = categories.find(c => c.id === categoryId);
     const item = items.find(i => i.id === itemId);
     if (cat && item) onSelect({ categoryId, categoryName: cat.name, subcategoryId, itemId, itemName: item.name });
-  }, [itemId]);
+  }, [categoryId, subcategoryId, itemId, items, categories, onSelect]);
 
   const isShelter = categories.find(c => c.id === categoryId)?.name === "쉼터";
 

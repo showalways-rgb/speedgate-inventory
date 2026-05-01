@@ -7,6 +7,8 @@ interface StockItem {
   itemId: number; itemName: string; subcategoryName: string;
   categoryName: string; categoryId: number;
   totalIn: number; totalOut: number; currentStock: number;
+  virtualOut?: boolean;
+  outOrderCount?: number;
 }
 interface Category { id: number; name: string }
 

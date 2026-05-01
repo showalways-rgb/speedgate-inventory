@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PackageMinus } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
+import { isVirtualOutItemName } from "@/lib/virtual-out-models";
 
 interface AddonOption { id: number; type: string; value: string }
 
@@ -41,7 +42,7 @@ function CardHeader({
         </div>
         <div style={{ minWidth: 0 }}>
           <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>{badge}</span>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>{title}</div>
+          <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginTop: "2px", lineHeight: 1.3 }}>{title}</div>
           <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", lineHeight: 1.45 }}>{desc}</div>
         </div>
       </div>
@@ -60,7 +61,11 @@ export default function StockOutPage() {
   const [addon, setAddon] = useState("");
   const [spec, setSpec] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ seqFrom: number; seqTo: number } | null>(null);
+  type CompanionRange = { name: string; seqFrom: number; seqTo: number };
+  type StockOutResult =
+    | { kind: "fifo"; seqFrom: number; seqTo: number; companions: CompanionRange[] }
+    | { kind: "virtual"; qty: number; companions: CompanionRange[] };
+  const [result, setResult] = useState<StockOutResult | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
   const [specOptions, setSpecOptions] = useState<AddonOption[]>([]);
@@ -91,8 +96,11 @@ export default function StockOutPage() {
   const handleSubmit = async () => {
     if (!selected?.itemId) { setError("모델을 선택해주세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
-    if (currentStock !== null && qty > currentStock) {
-      setError(`재고 부족: 현재고 ${currentStock}개, 요청 ${qty}개`); return;
+    const virtual = isVirtualOutItemName(selected.itemName);
+    /* BT-400M/BF-400M은 FIFO 재고와 무관하게 항상 등록 가능 */
+    if (!virtual && currentStock !== null && qty > currentStock) {
+      setError(`재고 부족: 현재고 ${currentStock}개, 요청 ${qty}개`);
+      return;
     }
     if (!date) { setError("날짜를 입력해주세요."); return; }
 
@@ -113,9 +121,30 @@ export default function StockOutPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
-      const counters: { seq: number }[] = data.shippedCounters;
-      setResult({ seqFrom: counters[0].seq, seqTo: counters[counters.length - 1].seq });
-      setCurrentStock(prev => (prev ?? 0) - qty);
+      const companions: CompanionRange[] = (data.companionShipped ?? []).map(
+        (r: { name: string; seqFrom: number; seqTo: number }) => ({
+          name: r.name,
+          seqFrom: r.seqFrom,
+          seqTo: r.seqTo,
+        })
+      );
+      if (data.virtualOut) {
+        setResult({ kind: "virtual", qty, companions });
+        setCurrentStock(prev => Math.max(0, (prev ?? 0) - qty));
+      } else {
+        const counters: { seq: number }[] = data.shippedCounters ?? [];
+        if (counters.length === 0) {
+          setError("출고 응답에 모델 카운터 정보가 없습니다.");
+          return;
+        }
+        setResult({
+          kind: "fifo",
+          seqFrom: counters[0].seq,
+          seqTo: counters[counters.length - 1].seq,
+          companions,
+        });
+        setCurrentStock(prev => (prev ?? 0) - qty);
+      }
       setQuantity("1"); setPrice(""); setNote(""); setAddon(""); setSpec("");
       setSelected(null);
     } catch {
@@ -128,9 +157,9 @@ export default function StockOutPage() {
   return (
     <div style={{ maxWidth: "640px" }}>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: 800, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>출고 등록 · FIFO</h1>
+        <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", letterSpacing: "-0.02em", margin: 0 }}>출고 등록</h1>
         <p style={{ fontSize: "14px", color: "var(--muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
-          선택한 모델만 재고 차감(선입선출)합니다. 추가모듈·세부사양은 같은 출고 건의 메모로만 기록되며 부품별 재고는 줄지 않습니다.
+          선택한 모델은 입고 순서대로 차감됩니다. 추가모듈·세부사양을 적으면, 위 출고 수량만큼 동일 이름으로 입고된 품목에서도 각각 차감됩니다.
         </p>
       </div>
 
@@ -140,7 +169,7 @@ export default function StockOutPage() {
           icon={PackageMinus}
           badge="출고"
           title="모델 출고"
-          desc="먼저 입고된 순서대로 자동 차감됩니다. 추가모듈·세부사양은 해당 출고에 함께 적습니다."
+          desc="모델·추가모듈·세부사양(입고분) 모두 같은 수량만큼 선입선출로 차감됩니다."
         />
         <div style={{ padding: "22px 24px 24px" }}>
           <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "10px" }}>품목 선택</div>
@@ -162,7 +191,7 @@ export default function StockOutPage() {
               </span>
               {currentStock !== null && (
                 <span style={{ fontWeight: 800, color: currentStock === 0 ? "var(--danger)" : GREEN, fontSize: "14px" }}>
-                  현재고 {currentStock}
+                  {isVirtualOutItemName(selected.itemName) ? "표시 재고(입−출)" : "현재고"} {currentStock}
                 </span>
               )}
             </div>
@@ -192,8 +221,7 @@ export default function StockOutPage() {
             <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          {/* 추가모듈·세부사양 — 같은 출고 건에 기록 */}
-          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양 (선택, 출고 행 메모용)</div>
+          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈 · 세부사양 (선택, 입고 품목과 동일 이름이면 수량만큼 출고)</div>
 
           <div style={{ marginBottom: "12px", padding: "12px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
@@ -248,8 +276,28 @@ export default function StockOutPage() {
           )}
 
           {result && (
-            <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", borderRadius: "10px", padding: "11px 14px", fontSize: "13px", marginBottom: "14px" }}>
-              출고 완료 · 카운터 <strong>{result.seqFrom} ~ {result.seqTo}</strong> (선입선출)
+            <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", borderRadius: "10px", padding: "11px 14px", fontSize: "13px", marginBottom: "14px", lineHeight: 1.5 }}>
+              {result.kind === "fifo" ? (
+                <>
+                  출고 완료 · 모델 카운터 <strong>{result.seqFrom} ~ {result.seqTo}</strong>
+                  {result.companions.map((c) => (
+                    <span key={`${c.name}-${c.seqFrom}`}>
+                      <br />
+                      <span style={{ opacity: 0.95 }}>· {c.name}</span> 카운터 <strong>{c.seqFrom} ~ {c.seqTo}</strong>
+                    </span>
+                  ))}
+                </>
+              ) : (
+                <>
+                  출고 완료 · <strong>{result.qty}</strong>대 등록 (모델: BT-400M/BF-400M 집계만, 카운터 없음)
+                  {result.companions.map((c) => (
+                    <span key={`${c.name}-${c.seqFrom}`}>
+                      <br />
+                      <span style={{ opacity: 0.95 }}>· {c.name}</span> 카운터 <strong>{c.seqFrom} ~ {c.seqTo}</strong>
+                    </span>
+                  ))}
+                </>
+              )}
             </div>
           )}
 

@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fifoStockOut, currentStock } from "@/lib/fifo";
+import { isVirtualOutItemName } from "@/lib/virtual-out-models";
+
+type CompanionMeta = { label: string; role: "addon" | "spec" };
+
+function trimOrNull(s: unknown): string | null {
+  if (s == null || typeof s !== "string") return null;
+  const t = s.trim();
+  return t.length ? t : null;
+}
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -11,33 +20,150 @@ export async function POST(req: Request) {
   }
 
   const qty = Number(quantity);
-  const stock = await currentStock(Number(itemId));
-  if (stock < qty) {
-    return NextResponse.json(
-      { error: `재고 부족: 현재 IN_STOCK ${stock}개, 요청 ${qty}개` },
-      { status: 400 }
-    );
+  const item = await prisma.item.findUnique({ where: { id: Number(itemId) } });
+  if (!item) return NextResponse.json({ error: "품목을 찾을 수 없습니다." }, { status: 404 });
+
+  const addonName = trimOrNull(addon);
+  const specName = trimOrNull(spec);
+
+  const companionSlots: CompanionMeta[] = [];
+  if (addonName) companionSlots.push({ label: addonName, role: "addon" });
+  if (specName) companionSlots.push({ label: specName, role: "spec" });
+
+  /** 품목명 → Item (입고 시 동일 이름으로 생성됨) */
+  const slotsWithItem: { meta: CompanionMeta; itemRow: { id: number } }[] = [];
+  for (const meta of companionSlots) {
+    const row = await prisma.item.findUnique({ where: { name: meta.label } });
+    if (!row) {
+      return NextResponse.json(
+        { error: `「${meta.label}」품목을 찾을 수 없습니다. 입고 등록 화면에서 추가모듈/세부사양으로 동일 이름으로 먼저 입고해 주세요.` },
+        { status: 400 }
+      );
+    }
+    slotsWithItem.push({ meta, itemRow: row });
   }
 
-  const tx = await prisma.transaction.create({
-    data: {
-      itemId: Number(itemId),
-      type: "OUT",
-      quantity: qty,
-      note: note || null,
-      addon: addon || null,
-      spec: spec || null,
-      price: price != null ? Number(price) : null,
-      date: new Date(date),
-    },
-  });
+  /** 동일 입고 품목이 추가모듈·세부사양에 동시에 지정되면 수량을 합산해 한 번만 출고 */
+  const byItemId = new Map<number, { itemRow: { id: number }; metas: CompanionMeta[] }>();
+  for (const row of slotsWithItem) {
+    const id = row.itemRow.id;
+    const prev = byItemId.get(id);
+    if (!prev) {
+      byItemId.set(id, { itemRow: row.itemRow, metas: [row.meta] });
+    } else {
+      prev.metas.push(row.meta);
+    }
+  }
 
-  await fifoStockOut(Number(itemId), qty, tx.id);
+  const virtual = isVirtualOutItemName(item.name);
 
-  const shippedCounters = await prisma.counter.findMany({
-    where: { outTxId: tx.id },
-    orderBy: { seq: "asc" },
-  });
+  if (!virtual) {
+    const stock = await currentStock(Number(itemId));
+    if (stock < qty) {
+      return NextResponse.json(
+        { error: `재고 부족: 현재 IN_STOCK ${stock}개, 요청 ${qty}개` },
+        { status: 400 }
+      );
+    }
+  }
 
-  return NextResponse.json({ transaction: tx, shippedCounters }, { status: 201 });
+  for (const [, { itemRow, metas }] of byItemId) {
+    const need = qty * metas.length;
+    const s = await currentStock(itemRow.id);
+    if (s < need) {
+      const label = metas.map((m) => m.label).join(" · ");
+      return NextResponse.json(
+        { error: `「${label}」재고 부족: 현재 IN_STOCK ${s}개, 동반 출고 필요 ${need}개(출고 수량 ${qty}×${metas.length})` },
+        { status: 400 }
+      );
+    }
+  }
+
+  const noteStr = note && String(note).trim() ? String(note).trim() : null;
+  const companionNoteBase = `동반출고 ${item.name}${noteStr ? ` · ${noteStr}` : ""}`;
+
+  try {
+    const { mainTx, shippedCounters, companionShipped, virtualOut } = await prisma.$transaction(
+      async (tx) => {
+        const mainTx = await tx.transaction.create({
+          data: {
+            itemId: Number(itemId),
+            type: "OUT",
+            quantity: qty,
+            note: noteStr,
+            addon: addonName,
+            spec: specName,
+            price: price != null ? Number(price) : null,
+            date: new Date(date),
+          },
+        });
+
+        if (!virtual) {
+          await fifoStockOut(Number(itemId), qty, mainTx.id, tx);
+        }
+
+        const shippedMain = await tx.counter.findMany({
+          where: { outTxId: mainTx.id },
+          orderBy: { seq: "asc" },
+        });
+
+        const companionShipped: { name: string; seqFrom: number; seqTo: number }[] = [];
+
+        for (const { itemRow, metas } of byItemId.values()) {
+          const need = qty * metas.length;
+          const addonLabels = metas.filter((m) => m.role === "addon").map((m) => m.label);
+          const specLabels = metas.filter((m) => m.role === "spec").map((m) => m.label);
+          const cTx = await tx.transaction.create({
+            data: {
+              itemId: itemRow.id,
+              type: "OUT",
+              quantity: need,
+              note: `${companionNoteBase} (${metas.map((m) => m.label).join(", ")})`,
+              addon: addonLabels[0] ?? null,
+              spec: specLabels[0] ?? null,
+              price: null,
+              date: new Date(date),
+            },
+          });
+          await fifoStockOut(itemRow.id, need, cTx.id, tx);
+          const shipped = await tx.counter.findMany({
+            where: { outTxId: cTx.id },
+            orderBy: { seq: "asc" },
+          });
+          if (shipped.length > 0) {
+            const label =
+              metas.length > 1 ? `${metas.map((m) => m.label).join(" + ")} (합산 ${need})` : metas[0].label;
+            companionShipped.push({
+              name: label,
+              seqFrom: shipped[0].seq,
+              seqTo: shipped[shipped.length - 1].seq,
+            });
+          }
+        }
+
+        return {
+          mainTx,
+          shippedCounters: shippedMain,
+          companionShipped,
+          virtualOut: virtual,
+        };
+      }
+    );
+
+    return NextResponse.json(
+      {
+        transaction: mainTx,
+        shippedCounters,
+        companionShipped,
+        virtualOut,
+      },
+      { status: 201 }
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("재고 부족")) {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    throw e;
+  }
 }
