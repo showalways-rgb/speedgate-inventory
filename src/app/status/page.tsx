@@ -132,7 +132,7 @@ export default function StatusPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "현장/비고", "추가모듈", "세부사양", ""].map(h => (
+                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "거래처/프로젝트명", "추가모듈", "세부사양", ""].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>

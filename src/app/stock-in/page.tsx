@@ -105,8 +105,8 @@ export default function StockInPage() {
 
         {/* 현장 (비고) */}
         <div style={{ marginBottom: "16px" }}>
-          <label style={labelStyle}>현장 / 비고</label>
-          <input type="text" style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="현장명 또는 메모" />
+          <label style={labelStyle}>거래처 / 프로젝트명</label>
+          <input type="text" style={inputStyle} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
         </div>
 
         {/* GATE 전용: 추가모듈, 세부사양 */}
