@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isVirtualOutItemName } from "@/lib/virtual-out-models";
 
-export const revalidate = 30;
-
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const categoryId = searchParams.get("categoryId") ? Number(searchParams.get("categoryId")) : undefined;

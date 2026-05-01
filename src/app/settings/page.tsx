@@ -88,7 +88,7 @@ export default function SettingsPage() {
     const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) { alert(data.error); return; }
-    loadItems();
+    setItemMsg("삭제 완료"); loadItems();
   };
 
   const handleAddAddon = async (type: string, value: string) => {
