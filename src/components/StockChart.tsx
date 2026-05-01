@@ -19,59 +19,83 @@ export default function StockChart({ data }: Props) {
     );
   }
 
+  const hasData = data.some(d => d.totalIn > 0);
+  if (!hasData) {
+    return (
+      <div style={{ textAlign: "center", padding: "48px 0", color: "var(--muted)", fontSize: "14px" }}>
+        입고 내역이 없습니다.
+      </div>
+    );
+  }
+
   const maxVal = Math.max(...data.map(d => d.totalIn), 1);
 
   return (
     <div style={{ overflowX: "auto" }}>
       <div style={{ minWidth: "480px" }}>
+        {/* 범례 */}
+        <div style={{ display: "flex", gap: "20px", marginBottom: "16px", flexWrap: "wrap" }}>
+          {[
+            { color: "#a0aec0", label: "현재고" },
+            { color: "#48bb78", label: "출고" },
+          ].map(({ color, label }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--muted)" }}>
+              <div style={{ width: "12px", height: "12px", background: color, borderRadius: "2px" }} />
+              {label}
+            </div>
+          ))}
+        </div>
+
         {data.map((item) => {
-          const inW = (item.totalIn / maxVal) * 100;
-          const outW = (item.totalOut / maxVal) * 100;
-          const stockW = (item.currentStock / maxVal) * 100;
+          if (item.totalIn === 0) return (
+            <div key={item.itemId} style={{ display: "flex", alignItems: "center", marginBottom: "10px", gap: "10px" }}>
+              <div style={{ width: "160px", flexShrink: 0, fontSize: "13px", color: "var(--foreground)", textAlign: "right", paddingRight: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {item.itemName}
+              </div>
+              <span style={{ fontSize: "12px", color: "#cbd5e0" }}>입고 없음</span>
+            </div>
+          );
+
+          const barW = (item.totalIn / maxVal) * 100;
+          const stockRatio = item.totalIn > 0 ? item.currentStock / item.totalIn : 0;
+          const outRatio = item.totalIn > 0 ? item.totalOut / item.totalIn : 0;
+
           return (
             <div key={item.itemId} style={{ display: "flex", alignItems: "center", marginBottom: "10px", gap: "10px" }}>
               <div style={{ width: "160px", flexShrink: 0, fontSize: "13px", color: "var(--foreground)", textAlign: "right", paddingRight: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {item.itemName}
               </div>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "3px" }}>
-                {item.totalIn > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <div style={{ width: `${inW}%`, height: "16px", background: "#4f86f7", borderRadius: "3px", minWidth: "2px" }} />
-                    <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>{item.totalIn}</span>
-                  </div>
-                )}
-                {item.totalOut > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <div style={{ width: `${outW}%`, height: "16px", background: "#48bb78", borderRadius: "3px", minWidth: "2px" }} />
-                    <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>{item.totalOut}</span>
-                  </div>
-                )}
-                {item.currentStock > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <div style={{ width: `${stockW}%`, height: "16px", background: "#a0aec0", borderRadius: "3px", minWidth: "2px" }} />
-                    <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>{item.currentStock}</span>
-                  </div>
-                )}
-                {item.totalIn === 0 && (
-                  <div style={{ height: "16px", display: "flex", alignItems: "center" }}>
-                    <span style={{ fontSize: "12px", color: "#cbd5e0" }}>입고 없음</span>
-                  </div>
-                )}
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* 단일 분할 바 */}
+                <div style={{ width: `${barW}%`, height: "20px", borderRadius: "4px", overflow: "hidden", display: "flex", minWidth: "4px" }}>
+                  {/* 현재고 (회색) */}
+                  {stockRatio > 0 && (
+                    <div
+                      title={`현재고: ${item.currentStock}`}
+                      style={{ width: `${stockRatio * 100}%`, height: "100%", background: "#a0aec0" }}
+                    />
+                  )}
+                  {/* 출고 (초록) */}
+                  {outRatio > 0 && (
+                    <div
+                      title={`출고: ${item.totalOut}`}
+                      style={{ width: `${outRatio * 100}%`, height: "100%", background: "#48bb78" }}
+                    />
+                  )}
+                </div>
+                {/* 숫자 표시 */}
+                <span style={{ fontSize: "12px", color: "var(--muted)", whiteSpace: "nowrap" }}>
+                  {item.currentStock > 0 && <span style={{ color: "#718096" }}>{item.currentStock} </span>}
+                  {item.totalOut > 0 && <span style={{ color: "#48bb78" }}>/ {item.totalOut}</span>}
+                  <span style={{ color: "#cbd5e0", marginLeft: "2px" }}>({item.totalIn})</span>
+                </span>
               </div>
             </div>
           );
         })}
-        <div style={{ marginTop: "16px", display: "flex", gap: "20px", paddingLeft: "170px", flexWrap: "wrap" }}>
-          {[
-            { color: "#4f86f7", label: "입고 및 재고" },
-            { color: "#48bb78", label: "출고" },
-            { color: "#a0aec0", label: "현재고" },
-          ].map(({ color, label }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--muted)" }}>
-              <div style={{ width: "14px", height: "14px", background: color, borderRadius: "3px" }} />
-              {label}
-            </div>
-          ))}
+
+        <div style={{ marginTop: "12px", paddingLeft: "170px", fontSize: "11px", color: "#a0aec0" }}>
+          현재고 / 출고 (총 입고)
         </div>
       </div>
     </div>
