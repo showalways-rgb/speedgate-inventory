@@ -1,5 +1,7 @@
 "use client";
 
+import { isVirtualOutItemName } from "@/lib/virtual-out-models";
+
 interface StockItem {
   itemId: number;
   itemName: string;
@@ -107,6 +109,8 @@ export default function StockChart({ data }: Props) {
               const totalOut = item.totalOut ?? 0;
               const cs = Math.max(0, item.currentStock ?? 0);
               const out = Math.max(0, totalOut);
+              const hideVirtualInAndStock =
+                item.virtualOut === true || isVirtualOutItemName(item.itemName);
 
               return (
                 <tr
@@ -148,9 +152,13 @@ export default function StockChart({ data }: Props) {
                   >
                     {item.itemName}
                   </td>
-                  <td style={{ ...numCellFirst, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{totalIn}</td>
+                  <td style={{ ...numCellFirst, color: TOTAL_IN_COLOR, fontWeight: 500 }}>
+                    {hideVirtualInAndStock ? "" : totalIn}
+                  </td>
                   <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{out > 0 ? out : "-"}</td>
-                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{cs}</td>
+                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>
+                    {hideVirtualInAndStock ? "" : cs}
+                  </td>
                 </tr>
               );
             })
