@@ -25,6 +25,8 @@ const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
 const ADDON_ACCENT = "#6366f1";
 
+const BRACKET_ITEMS = ["브라켓(대)_KJZ-03", "브라켓(소)_Rots-02", "Rots-02연장봉"];
+
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
 }: { accent: string; icon: React.ElementType; badge: string; title: string; desc?: string }) {
@@ -79,6 +81,8 @@ export default function StockOutPage() {
   const [result, setResult] = useState<StockOutResult | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
+  const [bracketItem, setBracketItem] = useState("");
+  const [bracketQty, setBracketQty] = useState("1");
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
@@ -145,6 +149,27 @@ export default function StockOutPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
+
+      if (bracketItem) {
+        const bracketRes = await fetch("/api/stock-out", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            itemName: bracketItem,
+            quantity: Number(bracketQty) || 1,
+            price: null,
+            note: note || null,
+            addon: null,
+            date,
+          }),
+        });
+        const bracketData = await bracketRes.json();
+        if (!bracketRes.ok) {
+          setError(bracketData.error ?? "브라켓 출고 오류");
+          return;
+        }
+      }
+
       const companions: CompanionRange[] = (data.companionShipped ?? []).map(
         (r: { name: string; seqFrom: number; seqTo: number }) => ({
           name: r.name,
@@ -170,6 +195,7 @@ export default function StockOutPage() {
         setCurrentStock(prev => (prev ?? 0) - qty);
       }
       setQuantity("1"); setPrice(""); setNote(""); setAddon("");
+      setBracketItem(""); setBracketQty("1");
       setSelected(null);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -239,7 +265,9 @@ export default function StockOutPage() {
           <div style={{ marginBottom: "14px" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-              {sortOptions(addonOptions).map(o => (
+              {sortOptions(addonOptions)
+                .filter((o) => !BRACKET_ITEMS.includes(o.value))
+                .map((o) => (
                 <button
                   key={o.id}
                   type="button"
@@ -256,6 +284,26 @@ export default function StockOutPage() {
                   {o.value}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "14px" }}>
+            <label style={smLabel}>브라켓 / Rots</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
+              <select style={input} value={bracketItem} onChange={(e) => setBracketItem(e.target.value)}>
+                <option value="">선택 안함</option>
+                {BRACKET_ITEMS.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min={1}
+                style={{ ...input, width: "80px" }}
+                value={bracketQty}
+                onChange={(e) => setBracketQty(e.target.value)}
+                disabled={!bracketItem}
+              />
             </div>
           </div>
 

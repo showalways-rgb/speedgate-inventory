@@ -17,14 +17,28 @@ function trimOrNull(s: unknown): string | null {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { itemId, quantity, note, addon, price, date } = body;
+  const { itemId: rawItemId, itemName, quantity, note, addon, price, date } = body;
 
-  if (!itemId || !quantity || !date) {
-    return NextResponse.json({ error: "itemId, quantity, date 필수" }, { status: 400 });
+  let resolvedItemId: number | null =
+    rawItemId != null && rawItemId !== "" ? Number(rawItemId) : null;
+  if (resolvedItemId != null && !Number.isFinite(resolvedItemId)) {
+    resolvedItemId = null;
+  }
+
+  if (!resolvedItemId && itemName) {
+    const found = await prisma.item.findUnique({ where: { name: String(itemName) } });
+    if (!found) {
+      return NextResponse.json({ error: `품목 「${itemName}」을 찾을 수 없습니다.` }, { status: 404 });
+    }
+    resolvedItemId = found.id;
+  }
+
+  if (!resolvedItemId || !quantity || !date) {
+    return NextResponse.json({ error: "itemId(또는 itemName), quantity, date 필수" }, { status: 400 });
   }
 
   const qty = Number(quantity);
-  const item = await prisma.item.findUnique({ where: { id: Number(itemId) } });
+  const item = await prisma.item.findUnique({ where: { id: resolvedItemId } });
   if (!item) return NextResponse.json({ error: "품목을 찾을 수 없습니다." }, { status: 404 });
 
   const addonName = trimOrNull(addon);
@@ -89,7 +103,7 @@ export async function POST(req: Request) {
       virtualParentItemIds.push(parent.id);
     }
   } else {
-    const stock = await currentStock(Number(itemId));
+    const stock = await currentStock(resolvedItemId);
     if (stock < qty) {
       return NextResponse.json(
         { error: `재고 부족: 현재 IN_STOCK ${stock}개, 요청 ${qty}개` },
@@ -117,7 +131,7 @@ export async function POST(req: Request) {
       async (tx) => {
         const mainTx = await tx.transaction.create({
           data: {
-            itemId: Number(itemId),
+            itemId: resolvedItemId,
             type: "OUT",
             quantity: qty,
             note: noteStr,
@@ -132,7 +146,7 @@ export async function POST(req: Request) {
             await fifoStockOut(parentId, qty, mainTx.id, tx);
           }
         } else {
-          await fifoStockOut(Number(itemId), qty, mainTx.id, tx);
+          await fifoStockOut(resolvedItemId, qty, mainTx.id, tx);
         }
 
         const shippedMain = await tx.counter.findMany({
