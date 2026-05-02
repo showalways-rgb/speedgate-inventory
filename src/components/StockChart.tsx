@@ -53,8 +53,8 @@ const headerThModel: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "10px 14px",
-  textAlign: "center",
+  padding: "10px 14px 10px 12px",
+  textAlign: "left",
 };
 
 const SUBCAT_HEADER_BG = "#ebf4ff";
@@ -130,8 +130,8 @@ export default function StockChart({ data }: Props) {
                           color: "#94a3b8",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
-                          padding: "10px 12px 8px 12px",
-                          textAlign: "center",
+                          padding: "10px 10px 8px 12px",
+                          textAlign: "left",
                           borderTop: groupIndex > 0 ? "1px solid #e2e8f0" : undefined,
                           background: SUBCAT_HEADER_BG,
                         }}
@@ -160,8 +160,8 @@ export default function StockChart({ data }: Props) {
                         maxWidth: MODEL_COL,
                         fontSize: "15px",
                         color: "var(--foreground)",
-                        padding: "9px 12px",
-                        textAlign: "center",
+                        padding: "9px 4px 9px 12px",
+                        textAlign: "left",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
