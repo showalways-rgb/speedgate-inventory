@@ -113,8 +113,13 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px" }}>
-          {selectedCat?.name ?? ""} 입출고 현황
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+          <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--foreground)" }}>
+            {selectedCat?.name ?? ""} 입출고 현황
+          </div>
+          <div style={{ fontSize: "13px", color: "#dc2626" }}>
+            이동형 모델(M) 출고 수량은 재고 차감 없이 기록만 됩니다. 카운터는 본품 기준으로 관리됩니다.
+          </div>
         </div>
 
         {loading ? (
