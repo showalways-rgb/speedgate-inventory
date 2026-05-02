@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PackageMinus } from "lucide-react";
 import CategorySelector from "@/components/CategorySelector";
 import { isVirtualOutItemName } from "@/lib/virtual-out-models";
@@ -87,20 +87,37 @@ export default function StockOutPage() {
     fetch("/api/addon-options?type=ADDON").then(r => r.json()).then(setAddonOptions);
   }, []);
 
-  useEffect(() => {
-    if (!selected?.itemId) { setCurrentStock(null); return; }
-    fetch(`/api/stock?categoryId=${selected.categoryId}`)
-      .then(r => r.json())
-      .then((data: { itemId: number; currentStock: number }[]) => {
-        const found = data.find(d => d.itemId === selected.itemId);
-        setCurrentStock(found?.currentStock ?? 0);
-      });
-  }, [selected]);
-
-  const handlePriceChange = (val: string) => {
+  const handlePriceChange = useCallback((val: string) => {
     const numeric = val.replace(/[^0-9]/g, "");
     setPrice(numeric ? Number(numeric).toLocaleString("ko-KR") : "");
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!selected?.itemId) {
+      setCurrentStock(null);
+      setPrice("");
+      return;
+    }
+    let cancelled = false;
+    const catId = selected.categoryId;
+    const itemId = selected.itemId;
+    Promise.all([
+      fetch(`/api/stock?categoryId=${catId}`).then((r) => r.json()),
+      fetch(`/api/stock-out/fifo-price?itemId=${itemId}`).then((r) => r.json()),
+    ]).then(([stockData, priceData]: [{ itemId: number; currentStock: number }[], { price?: number | null }]) => {
+      if (cancelled) return;
+      const found = stockData.find((d) => d.itemId === itemId);
+      setCurrentStock(found?.currentStock ?? 0);
+      if (priceData != null && priceData.price != null) {
+        handlePriceChange(String(priceData.price));
+      } else {
+        setPrice("");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, handlePriceChange]);
 
   const handleSubmit = async () => {
     if (!selected?.itemId) { setError("모델을 선택해주세요."); return; }

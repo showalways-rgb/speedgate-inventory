@@ -51,7 +51,36 @@ body {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
-  align-items: start;
+  align-items: stretch;
+}
+
+/* 같은 행 높이: 카드 본문이 남는 세로 공간을 채움 */
+.stock-register-grid > .stock-side-stack {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stock-register-grid > .stock-side-stack > .stock-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-register-grid > .stock-card {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-register-grid > .stock-card > :last-child,
+.stock-register-grid > .stock-side-stack > .stock-card > :last-child {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 @media (max-width: 960px) {
   .stock-register-grid {
