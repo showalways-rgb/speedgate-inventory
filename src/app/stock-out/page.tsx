@@ -159,6 +159,15 @@ export default function StockOutPage() {
 
     setLoading(true); setError(""); setResult(null);
     try {
+      let freshAddonPrice: number | null = null;
+      const addonTrim = addon.trim();
+      if (addonTrim) {
+        const addonPriceRes = await fetch(
+          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(addonTrim)}`
+        ).then((r) => r.json());
+        freshAddonPrice = addonPriceRes.price ?? null;
+      }
+
       const res = await fetch("/api/stock-out", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -167,8 +176,8 @@ export default function StockOutPage() {
           quantity: qty,
           price: unitPrice || null,
           note: note || null,
-          addon: addon.trim() || null,
-          addonPrice: addonFifoPrice,
+          addon: addonTrim || null,
+          addonPrice: freshAddonPrice,
           date,
         }),
       });
@@ -176,13 +185,18 @@ export default function StockOutPage() {
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
 
       if (bracketItem) {
+        const priceRes = await fetch(
+          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(bracketItem)}`
+        ).then((r) => r.json());
+        const freshBracketPrice = priceRes.price ?? null;
+
         const bracketRes = await fetch("/api/stock-out", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             itemName: bracketItem,
             quantity: Number(bracketQty) || 1,
-            price: bracketFifoPrice,
+            price: freshBracketPrice,
             note: note || null,
             addon: null,
             date,
