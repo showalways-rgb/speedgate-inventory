@@ -80,7 +80,7 @@ export default function StockChart({ data }: Props) {
       <table style={{ width: "max-content", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
           <col style={{ width: "118px" }} />
-          <col style={{ width: "168px" }} />
+          <col style={{ width: "240px" }} />
           <col style={{ width: "100px" }} />
           <col style={{ width: "100px" }} />
           <col style={{ width: "100px" }} />
@@ -88,7 +88,7 @@ export default function StockChart({ data }: Props) {
         <thead>
           <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
             <th scope="col" style={{ ...headerThBlank, width: "118px" }} />
-            <th scope="col" style={{ ...headerThBlank, width: "168px" }} />
+            <th scope="col" style={{ ...headerThBlank, width: "240px" }} />
             <th scope="col" style={{ ...headerTh, width: "100px" }}>
               총입고
             </th>
@@ -140,8 +140,8 @@ export default function StockChart({ data }: Props) {
                   <td
                     title={item.itemName}
                     style={{
-                      width: "168px",
-                      maxWidth: "168px",
+                      width: "240px",
+                      maxWidth: "240px",
                       fontSize: "14px",
                       color: "var(--foreground)",
                       padding: "5px 4px 5px 10px",
