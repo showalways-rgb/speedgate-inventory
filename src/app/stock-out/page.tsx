@@ -83,6 +83,8 @@ export default function StockOutPage() {
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
   const [bracketItem, setBracketItem] = useState("");
   const [bracketQty, setBracketQty] = useState("1");
+  const [addonFifoPrice, setAddonFifoPrice] = useState<number | null>(null);
+  const [bracketFifoPrice, setBracketFifoPrice] = useState<number | null>(null);
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
@@ -123,6 +125,28 @@ export default function StockOutPage() {
     };
   }, [selected, handlePriceChange]);
 
+  const handleAddonToggle = async (value: string) => {
+    const next = addon === value ? "" : value;
+    setAddon(next);
+    if (next) {
+      const res = await fetch(`/api/stock-out/fifo-price?itemName=${encodeURIComponent(next)}`).then((r) => r.json());
+      setAddonFifoPrice(res.price ?? null);
+    } else {
+      setAddonFifoPrice(null);
+    }
+  };
+
+  const handleBracketChange = async (value: string) => {
+    setBracketItem(value);
+    setBracketQty("1");
+    if (value) {
+      const res = await fetch(`/api/stock-out/fifo-price?itemName=${encodeURIComponent(value)}`).then((r) => r.json());
+      setBracketFifoPrice(res.price ?? null);
+    } else {
+      setBracketFifoPrice(null);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selected?.itemId) { setError("모델을 선택해주세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
@@ -144,6 +168,7 @@ export default function StockOutPage() {
           price: unitPrice || null,
           note: note || null,
           addon: addon.trim() || null,
+          addonPrice: addonFifoPrice,
           date,
         }),
       });
@@ -157,7 +182,7 @@ export default function StockOutPage() {
           body: JSON.stringify({
             itemName: bracketItem,
             quantity: Number(bracketQty) || 1,
-            price: null,
+            price: bracketFifoPrice,
             note: note || null,
             addon: null,
             date,
@@ -196,6 +221,8 @@ export default function StockOutPage() {
       }
       setQuantity("1"); setPrice(""); setNote(""); setAddon("");
       setBracketItem(""); setBracketQty("1");
+      setAddonFifoPrice(null);
+      setBracketFifoPrice(null);
       setSelected(null);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -271,7 +298,7 @@ export default function StockOutPage() {
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => setAddon(prev => prev === o.value ? "" : o.value)}
+                  onClick={() => void handleAddonToggle(o.value)}
                   style={{
                     padding: "5px 12px", borderRadius: "999px", fontSize: "12px",
                     border: `1px solid ${addon === o.value ? ADDON_ACCENT : "var(--border)"}`,
@@ -290,7 +317,7 @@ export default function StockOutPage() {
           <div style={{ marginBottom: "14px" }}>
             <label style={smLabel}>브라켓 / Rots</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
-              <select style={input} value={bracketItem} onChange={(e) => setBracketItem(e.target.value)}>
+              <select style={input} value={bracketItem} onChange={(e) => void handleBracketChange(e.target.value)}>
                 <option value="">선택 안함</option>
                 {BRACKET_ITEMS.map((v) => (
                   <option key={v} value={v}>{v}</option>

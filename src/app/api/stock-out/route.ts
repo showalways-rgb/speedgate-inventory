@@ -17,7 +17,7 @@ function trimOrNull(s: unknown): string | null {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { itemId: rawItemId, itemName, quantity, note, addon, price, date } = body;
+  const { itemId: rawItemId, itemName, quantity, note, addon, addonPrice, price, date } = body;
 
   let resolvedItemId: number | null =
     rawItemId != null && rawItemId !== "" ? Number(rawItemId) : null;
@@ -166,7 +166,7 @@ export async function POST(req: Request) {
               quantity: need,
               note: null,
               addon: addonLabels[0] ?? null,
-              price: null,
+              price: addonPrice != null ? Number(addonPrice) : null,
               date: new Date(date),
             },
           });

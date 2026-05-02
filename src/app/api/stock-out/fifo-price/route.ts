@@ -9,19 +9,26 @@ import {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const itemIdParam = searchParams.get("itemId");
-  if (!itemIdParam) {
-    return NextResponse.json({ error: "itemId 필수" }, { status: 400 });
+  const itemNameParam = searchParams.get("itemName");
+
+  let targetItemId: number | null = null;
+
+  if (itemIdParam) {
+    const n = Number(itemIdParam);
+    if (!Number.isFinite(n)) {
+      return NextResponse.json({ error: "유효하지 않은 itemId" }, { status: 400 });
+    }
+    targetItemId = n;
+  } else if (itemNameParam) {
+    const found = await prisma.item.findUnique({ where: { name: itemNameParam }, select: { id: true } });
+    if (!found) return NextResponse.json({ price: null });
+    targetItemId = found.id;
+  } else {
+    return NextResponse.json({ error: "itemId 또는 itemName 필수" }, { status: 400 });
   }
 
-  const itemId = Number(itemIdParam);
-  if (!Number.isFinite(itemId)) {
-    return NextResponse.json({ error: "유효하지 않은 itemId" }, { status: 400 });
-  }
-
-  const item = await prisma.item.findUnique({ where: { id: itemId }, select: { name: true } });
+  const item = await prisma.item.findUnique({ where: { id: targetItemId }, select: { name: true } });
   if (!item) return NextResponse.json({ price: null });
-
-  let targetItemId = itemId;
 
   if (isVirtualOutItemName(item.name)) {
     const key = normalizeVirtualOutItemName(item.name);
