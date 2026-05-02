@@ -15,8 +15,6 @@ interface Props {
   data: StockItem[];
 }
 
-const OUT_GREEN = "#48bb78";
-const OUT_ZERO = "#cbd5e1";
 const TOTAL_IN_COLOR = "#64748b";
 
 function groupBySubcategory(items: StockItem[]): { subcategoryName: string; rows: StockItem[] }[] {
@@ -40,7 +38,7 @@ const headerTh: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "10px 16px",
+  padding: "8px 10px",
   textAlign: "right",
 };
 
@@ -48,7 +46,7 @@ const headerThBlank: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "10px 12px",
+  padding: "8px 10px",
   textAlign: "left",
 };
 
@@ -66,24 +64,36 @@ export default function StockChart({ data }: Props) {
   const numCell: React.CSSProperties = {
     textAlign: "right",
     fontSize: "14px",
-    padding: "5px 16px",
+    padding: "5px 10px",
     fontVariantNumeric: "tabular-nums",
   };
 
+  const numCellFirst: React.CSSProperties = {
+    ...numCell,
+    paddingLeft: "4px",
+  };
+
   return (
-    <div style={{ width: "100%", overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div style={{ maxWidth: "100%", overflowX: "auto" }}>
+      <table style={{ width: "max-content", borderCollapse: "collapse", tableLayout: "fixed" }}>
+        <colgroup>
+          <col style={{ width: "118px" }} />
+          <col style={{ width: "168px" }} />
+          <col style={{ width: "100px" }} />
+          <col style={{ width: "100px" }} />
+          <col style={{ width: "100px" }} />
+        </colgroup>
         <thead>
           <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-            <th scope="col" style={{ ...headerThBlank, width: "130px" }} />
-            <th scope="col" style={{ ...headerThBlank, width: "200px" }} />
-            <th scope="col" style={headerTh}>
+            <th scope="col" style={{ ...headerThBlank, width: "118px" }} />
+            <th scope="col" style={{ ...headerThBlank, width: "168px" }} />
+            <th scope="col" style={{ ...headerTh, width: "100px" }}>
               총입고
             </th>
-            <th scope="col" style={headerTh}>
+            <th scope="col" style={{ ...headerTh, width: "100px" }}>
               출고
             </th>
-            <th scope="col" style={headerTh}>
+            <th scope="col" style={{ ...headerTh, width: "100px" }}>
               현재고
             </th>
           </tr>
@@ -110,14 +120,14 @@ export default function StockChart({ data }: Props) {
                     <td
                       rowSpan={group.rows.length}
                       style={{
-                        width: "130px",
+                        width: "118px",
                         fontSize: "13px",
                         color: "#94a3b8",
                         fontWeight: 500,
                         verticalAlign: "top",
                         paddingTop: "8px",
-                        paddingLeft: "12px",
-                        paddingRight: "12px",
+                        paddingLeft: "10px",
+                        paddingRight: "8px",
                       }}
                     >
                       {group.subcategoryName}
@@ -126,11 +136,11 @@ export default function StockChart({ data }: Props) {
                   <td
                     title={item.itemName}
                     style={{
-                      width: "200px",
-                      maxWidth: "200px",
+                      width: "168px",
+                      maxWidth: "168px",
                       fontSize: "14px",
                       color: "var(--foreground)",
-                      padding: "5px 12px",
+                      padding: "5px 4px 5px 10px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -138,25 +148,9 @@ export default function StockChart({ data }: Props) {
                   >
                     {item.itemName}
                   </td>
-                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{totalIn}</td>
-                  <td
-                    style={{
-                      ...numCell,
-                      color: out > 0 ? OUT_GREEN : OUT_ZERO,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {out > 0 ? out : "-"}
-                  </td>
-                  <td
-                    style={{
-                      ...numCell,
-                      color: cs === 0 ? "#dc2626" : "var(--primary)",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {cs}
-                  </td>
+                  <td style={{ ...numCellFirst, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{totalIn}</td>
+                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{out > 0 ? out : "-"}</td>
+                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{cs}</td>
                 </tr>
               );
             })
