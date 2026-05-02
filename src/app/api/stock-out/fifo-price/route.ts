@@ -45,7 +45,12 @@ export async function GET(req: Request) {
   });
 
   if (!counter) {
-    return NextResponse.json({ price: null });
+    const lastIn = await prisma.transaction.findFirst({
+      where: { itemId: targetItemId, type: "IN" },
+      orderBy: { date: "desc" },
+      select: { price: true },
+    });
+    return NextResponse.json({ price: lastIn?.price ?? null });
   }
 
   const tx = await prisma.transaction.findUnique({
