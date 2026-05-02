@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  VIRTUAL_OUT_PARENT_ITEMS,
+  isVirtualOutItemName,
+  normalizeVirtualOutItemName,
+} from "@/lib/virtual-out-models";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -13,8 +18,22 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "유효하지 않은 itemId" }, { status: 400 });
   }
 
+  const item = await prisma.item.findUnique({ where: { id: itemId }, select: { name: true } });
+  if (!item) return NextResponse.json({ price: null });
+
+  let targetItemId = itemId;
+
+  if (isVirtualOutItemName(item.name)) {
+    const key = normalizeVirtualOutItemName(item.name);
+    const parentName = VIRTUAL_OUT_PARENT_ITEMS[key]?.[0];
+    if (parentName) {
+      const parent = await prisma.item.findUnique({ where: { name: parentName }, select: { id: true } });
+      if (parent) targetItemId = parent.id;
+    }
+  }
+
   const counter = await prisma.counter.findFirst({
-    where: { itemId, status: "IN_STOCK" },
+    where: { itemId: targetItemId, status: "IN_STOCK" },
     orderBy: { seq: "asc" },
   });
 
