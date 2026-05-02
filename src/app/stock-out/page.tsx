@@ -23,6 +23,7 @@ const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom:
 
 const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
+const ADDON_ACCENT = "#6366f1";
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
@@ -65,8 +66,7 @@ export default function StockOutPage() {
   const [result, setResult] = useState<StockOutResult | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
-  const [extraItem, setExtraItem] = useState("");
-  const [extraQty, setExtraQty] = useState("1");
+  const [extraItems, setExtraItems] = useState<{ item: string; qty: string }[]>([{ item: "", qty: "1" }]);
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
@@ -133,17 +133,16 @@ export default function StockOutPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
 
-      if (extraItem) {
+      for (const e of extraItems.filter((x) => x.item)) {
         const priceRes = await fetch(
-          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(extraItem)}`
+          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(e.item)}`
         ).then((r) => r.json());
-
         const extraRes = await fetch("/api/stock-out", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            itemName: extraItem,
-            quantity: Number(extraQty) || 1,
+            itemName: e.item,
+            quantity: Number(e.qty) || 1,
             price: priceRes.price ?? null,
             note: note || null,
             addon: null,
@@ -182,7 +181,7 @@ export default function StockOutPage() {
         setCurrentStock(prev => (prev ?? 0) - qty);
       }
       setQuantity("1"); setPrice(""); setNote("");
-      setExtraItem(""); setExtraQty("1");
+      setExtraItems([{ item: "", qty: "1" }]);
       setSelected(null);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -250,23 +249,51 @@ export default function StockOutPage() {
           </div>
 
           <div style={{ marginBottom: "14px" }}>
-            <label style={smLabel}>추가모듈</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
-              <select style={input} value={extraItem} onChange={(e) => setExtraItem(e.target.value)}>
-                <option value="">선택 안함</option>
-                {addonOptions.map((o) => (
-                  <option key={o.id} value={o.value}>{o.value}</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={1}
-                style={{ ...input, width: "80px" }}
-                value={extraQty}
-                onChange={(e) => setExtraQty(e.target.value)}
-                disabled={!extraItem}
-              />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <label style={smLabel}>추가모듈</label>
+              <button
+                type="button"
+                onClick={() => setExtraItems((prev) => [...prev, { item: "", qty: "1" }])}
+                style={{ fontSize: "12px", color: ADDON_ACCENT, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
+              >
+                + 추가
+              </button>
             </div>
+            {extraItems.map((e, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "8px", marginBottom: "6px" }}>
+                <select
+                  style={input}
+                  value={e.item}
+                  onChange={(ev) =>
+                    setExtraItems((prev) => prev.map((x, j) => (j === i ? { ...x, item: ev.target.value } : x)))
+                  }
+                >
+                  <option value="">선택 안함</option>
+                  {addonOptions.map((o) => (
+                    <option key={o.id} value={o.value}>{o.value}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  style={{ ...input, width: "70px" }}
+                  value={e.qty}
+                  disabled={!e.item}
+                  onChange={(ev) =>
+                    setExtraItems((prev) => prev.map((x, j) => (j === i ? { ...x, qty: ev.target.value } : x)))
+                  }
+                />
+                {extraItems.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setExtraItems((prev) => prev.filter((_, j) => j !== i))}
+                    style={{ fontSize: "13px", color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
 
           {error && (
