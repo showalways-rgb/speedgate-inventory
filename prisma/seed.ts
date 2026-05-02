@@ -68,14 +68,6 @@ const ADDON_OPTIONS = [
   { type: "ADDON", value: "Fence(SUS)", order: 6 },
 ];
 
-const SPEC_OPTIONS = [
-  { type: "SPEC", value: "540mm", order: 1 },
-  { type: "SPEC", value: "710mm", order: 2 },
-  { type: "SPEC", value: "800mm", order: 3 },
-  { type: "SPEC", value: "400mm", order: 4 },
-  { type: "SPEC", value: "베이스 플레이트, 상판, 방부목 Ass'y", order: 5 },
-];
-
 async function main() {
   console.log("Seeding...");
 
@@ -123,7 +115,7 @@ async function main() {
     console.log(`Deleted legacy Item "이동식플레이트" (${orphanIds.length}) and counters/transactions.`);
   }
 
-  for (const opt of [...ADDON_OPTIONS, ...SPEC_OPTIONS]) {
+  for (const opt of ADDON_OPTIONS) {
     await prisma.addonOption.upsert({
       where: { type_value: { type: opt.type, value: opt.value } },
       update: { order: opt.order },

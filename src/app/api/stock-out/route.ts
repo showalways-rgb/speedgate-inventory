@@ -7,7 +7,7 @@ import {
   VIRTUAL_OUT_PARENT_ITEMS,
 } from "@/lib/virtual-out-models";
 
-type CompanionMeta = { label: string; role: "addon" | "spec" };
+type CompanionMeta = { label: string };
 
 function trimOrNull(s: unknown): string | null {
   if (s == null || typeof s !== "string") return null;
@@ -17,7 +17,7 @@ function trimOrNull(s: unknown): string | null {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { itemId, quantity, note, addon, spec, price, date } = body;
+  const { itemId, quantity, note, addon, price, date } = body;
 
   if (!itemId || !quantity || !date) {
     return NextResponse.json({ error: "itemId, quantity, date 필수" }, { status: 400 });
@@ -28,11 +28,9 @@ export async function POST(req: Request) {
   if (!item) return NextResponse.json({ error: "품목을 찾을 수 없습니다." }, { status: 404 });
 
   const addonName = trimOrNull(addon);
-  const specName = trimOrNull(spec);
 
   const companionSlots: CompanionMeta[] = [];
-  if (addonName) companionSlots.push({ label: addonName, role: "addon" });
-  if (specName) companionSlots.push({ label: specName, role: "spec" });
+  if (addonName) companionSlots.push({ label: addonName });
 
   /** 품목명 → Item (입고 시 동일 이름으로 생성됨) */
   const slotsWithItem: { meta: CompanionMeta; itemRow: { id: number } }[] = [];
@@ -40,14 +38,14 @@ export async function POST(req: Request) {
     const row = await prisma.item.findUnique({ where: { name: meta.label } });
     if (!row) {
       return NextResponse.json(
-        { error: `「${meta.label}」품목을 찾을 수 없습니다. 입고 등록 화면에서 추가모듈/세부사양으로 동일 이름으로 먼저 입고해 주세요.` },
+        { error: `「${meta.label}」품목을 찾을 수 없습니다. 입고 등록 화면에서 추가모듈로 동일 이름으로 먼저 입고해 주세요.` },
         { status: 400 }
       );
     }
     slotsWithItem.push({ meta, itemRow: row });
   }
 
-  /** 동일 입고 품목이 추가모듈·세부사양에 동시에 지정되면 수량을 합산해 한 번만 출고 */
+  /** 동일 입고 품목이 추가모듈에 동시에 지정되면 수량을 합산해 한 번만 출고 */
   const byItemId = new Map<number, { itemRow: { id: number }; metas: CompanionMeta[] }>();
   for (const row of slotsWithItem) {
     const id = row.itemRow.id;
@@ -124,7 +122,6 @@ export async function POST(req: Request) {
             quantity: qty,
             note: noteStr,
             addon: addonName,
-            spec: specName,
             price: price != null ? Number(price) : null,
             date: new Date(date),
           },
@@ -147,8 +144,7 @@ export async function POST(req: Request) {
 
         for (const { itemRow, metas } of byItemId.values()) {
           const need = qty * metas.length;
-          const addonLabels = metas.filter((m) => m.role === "addon").map((m) => m.label);
-          const specLabels = metas.filter((m) => m.role === "spec").map((m) => m.label);
+          const addonLabels = metas.map((m) => m.label);
           const cTx = await tx.transaction.create({
             data: {
               itemId: itemRow.id,
@@ -156,7 +152,6 @@ export async function POST(req: Request) {
               quantity: need,
               note: null,
               addon: addonLabels[0] ?? null,
-              spec: specLabels[0] ?? null,
               price: null,
               date: new Date(date),
             },

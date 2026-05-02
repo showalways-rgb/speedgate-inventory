@@ -8,7 +8,6 @@ interface TxItem {
   quantity: number;
   note: string | null;
   addon: string | null;
-  spec: string | null;
   price: number | null;
   date: string;
   createdAt: string;
@@ -76,7 +75,6 @@ export default function StatusPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editNote, setEditNote] = useState("");
   const [editAddon, setEditAddon] = useState("");
-  const [editSpec, setEditSpec] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editDate, setEditDate] = useState("");
 
@@ -142,7 +140,6 @@ export default function StatusPage() {
     setEditId(tx.id);
     setEditNote(tx.note ?? "");
     setEditAddon(tx.addon ?? "");
-    setEditSpec(tx.spec ?? "");
     setEditPrice(tx.price != null ? fmt(tx.price) : "");
     setEditDate(tx.date.slice(0, 10));
   };
@@ -158,7 +155,7 @@ export default function StatusPage() {
     const res = await fetch(`/api/transactions/${editId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ note: editNote, addon: editAddon, spec: editSpec, price: priceNum, date: editDate }),
+      body: JSON.stringify({ note: editNote, addon: editAddon, price: priceNum, date: editDate }),
     });
     if (!res.ok) {
       alert("수정 실패");
@@ -274,7 +271,7 @@ export default function StatusPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "단가", "합계금액", "거래처/프로젝트명", "추가모듈", "세부사양", ""].map((h) => (
+                {["날짜", "유형", "대분류", "소분류", "모델", "수량", "단가", "합계금액", "거래처/프로젝트명", "추가모듈", ""].map((h) => (
                   <th key={h} style={thStyle}>
                     {h}
                   </th>
@@ -333,17 +330,6 @@ export default function StatusPage() {
                         <input
                           value={editAddon}
                           onChange={(e) => setEditAddon(e.target.value)}
-                          style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "12px", width: "80px" }}
-                        />
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td style={tdStyle}>
-                      {isGate(tx) ? (
-                        <input
-                          value={editSpec}
-                          onChange={(e) => setEditSpec(e.target.value)}
                           style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "12px", width: "80px" }}
                         />
                       ) : (
@@ -416,7 +402,6 @@ export default function StatusPage() {
                     </td>
                     <td style={tdStyle}>{tx.note || "-"}</td>
                     <td style={tdStyle}>{isGate(tx) ? tx.addon || "-" : "-"}</td>
-                    <td style={tdStyle}>{isGate(tx) ? tx.spec || "-" : "-"}</td>
                     <td style={tdStyle}>
                       <div style={{ display: "flex", gap: "6px" }}>
                         <button

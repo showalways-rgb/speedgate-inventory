@@ -140,7 +140,6 @@ export default function StockOutPage() {
           price: unitPrice || null,
           note: note || null,
           addon: addon.trim() || null,
-          spec: null,
           date,
         }),
       });

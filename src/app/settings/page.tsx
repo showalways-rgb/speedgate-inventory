@@ -34,9 +34,7 @@ export default function SettingsPage() {
   const [selectedSubId, setSelectedSubId] = useState<number>(0);
   const [newItemName, setNewItemName] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
-  const [specOptions, setSpecOptions] = useState<AddonOption[]>([]);
   const [newAddon, setNewAddon] = useState("");
-  const [newSpec, setNewSpec] = useState("");
   const [itemMsg, setItemMsg] = useState("");
 
   const loadCategories = useCallback(async () => {
@@ -59,12 +57,8 @@ export default function SettingsPage() {
   }, [selectedSubId]);
 
   const loadAddonOptions = useCallback(async () => {
-    const [addons, specs] = await Promise.all([
-      fetch("/api/addon-options?type=ADDON").then(r => r.json()),
-      fetch("/api/addon-options?type=SPEC").then(r => r.json()),
-    ]);
+    const addons: AddonOption[] = await fetch("/api/addon-options?type=ADDON").then(r => r.json());
     setAddonOptions(addons);
-    setSpecOptions(specs);
   }, []);
 
   useEffect(() => { loadCategories(); }, []);
@@ -97,8 +91,7 @@ export default function SettingsPage() {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ type, value }),
     });
-    if (type === "ADDON") setNewAddon("");
-    else setNewSpec("");
+    setNewAddon("");
     loadAddonOptions();
   };
 
@@ -159,25 +152,6 @@ export default function SettingsPage() {
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {addonOptions.map(o => (
-            <div key={o.id} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px 10px" }}>
-              <span style={{ fontSize: "13px" }}>{o.value}</span>
-              <button onClick={() => handleDeleteAddon(o.id)} style={{ ...btnDanger, padding: "2px 6px", fontSize: "11px" }}>삭제</button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 세부사양 옵션 */}
-      <div style={card}>
-        <div style={sectionTitle}>세부사양</div>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-          <input style={inputStyle} value={newSpec} onChange={e => setNewSpec(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleAddAddon("SPEC", newSpec)}
-            placeholder="새 세부사양 값 입력" />
-          <button style={btnPrimary} onClick={() => handleAddAddon("SPEC", newSpec)}>추가</button>
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-          {specOptions.map(o => (
             <div key={o.id} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f8fafc", border: "1px solid var(--border)", borderRadius: "8px", padding: "6px 10px" }}>
               <span style={{ fontSize: "13px" }}>{o.value}</span>
               <button onClick={() => handleDeleteAddon(o.id)} style={{ ...btnDanger, padding: "2px 6px", fontSize: "11px" }}>삭제</button>

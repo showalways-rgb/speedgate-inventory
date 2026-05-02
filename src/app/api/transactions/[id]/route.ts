@@ -5,14 +5,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const txId = Number(id);
   const body = await req.json();
-  const { note, addon, spec, price, date } = body;
+  const { note, addon, price, date } = body;
 
   const tx = await prisma.transaction.update({
     where: { id: txId },
     data: {
       ...(note !== undefined ? { note: note || null } : {}),
       ...(addon !== undefined ? { addon: addon || null } : {}),
-      ...(spec !== undefined ? { spec: spec || null } : {}),
       ...(price !== undefined ? { price: price != null && price !== "" ? Number(price) : null } : {}),
       ...(date ? { date: new Date(date) } : {}),
     },
