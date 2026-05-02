@@ -49,16 +49,13 @@ const headerTh: React.CSSProperties = {
   textAlign: "right",
 };
 
-const headerThModel: React.CSSProperties = {
+const headerThBlank: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "10px 14px 10px 12px",
+  padding: "10px 14px",
   textAlign: "left",
 };
-
-const SUBCAT_HEADER_BG = "#ebf4ff";
-const MODEL_COL = "240px";
 
 export default function StockChart({ data }: Props) {
   if (!data.length) {
@@ -87,14 +84,14 @@ export default function StockChart({ data }: Props) {
     <div style={{ maxWidth: "100%", overflowX: "auto" }}>
       <table style={{ width: "max-content", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
-          <col style={{ width: MODEL_COL }} />
+          <col style={{ width: "280px" }} />
           <col style={{ width: "110px" }} />
           <col style={{ width: "110px" }} />
           <col style={{ width: "110px" }} />
         </colgroup>
         <thead>
           <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-            <th scope="col" style={{ ...headerThModel, width: MODEL_COL }}>
+            <th scope="col" style={{ ...headerThBlank, width: "280px" }}>
               모델명
             </th>
             <th scope="col" style={{ ...headerTh, width: "110px" }}>
@@ -124,28 +121,20 @@ export default function StockChart({ data }: Props) {
                   {isFirstInGroup && group.subcategoryName && (
                     <tr>
                       <td
+                        colSpan={4}
                         style={{
                           fontSize: "11px",
                           fontWeight: 700,
                           color: "#94a3b8",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
-                          padding: "10px 10px 8px 12px",
-                          textAlign: "left",
+                          padding: "10px 10px 4px 10px",
                           borderTop: groupIndex > 0 ? "1px solid #e2e8f0" : undefined,
-                          background: SUBCAT_HEADER_BG,
+                          background: "#f8fafc",
                         }}
                       >
                         {group.subcategoryName}
                       </td>
-                      <td
-                        colSpan={3}
-                        style={{
-                          borderTop: groupIndex > 0 ? "1px solid #e2e8f0" : undefined,
-                          background: SUBCAT_HEADER_BG,
-                          padding: 0,
-                        }}
-                      />
                     </tr>
                   )}
                   <tr
@@ -156,12 +145,11 @@ export default function StockChart({ data }: Props) {
                     <td
                       title={item.itemName}
                       style={{
-                        width: MODEL_COL,
-                        maxWidth: MODEL_COL,
+                        width: "280px",
+                        maxWidth: "280px",
                         fontSize: "15px",
                         color: "var(--foreground)",
                         padding: "9px 4px 9px 12px",
-                        textAlign: "left",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
