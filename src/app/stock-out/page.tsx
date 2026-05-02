@@ -254,11 +254,9 @@ export default function StockOutPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
               <select style={input} value={extraItem} onChange={(e) => setExtraItem(e.target.value)}>
                 <option value="">선택 안함</option>
-                {addonOptions
-                  .filter((o) => !o.value.startsWith("이동식플레이트"))
-                  .map((o) => (
-                    <option key={o.id} value={o.value}>{o.value}</option>
-                  ))}
+                {addonOptions.map((o) => (
+                  <option key={o.id} value={o.value}>{o.value}</option>
+                ))}
               </select>
               <input
                 type="number"
