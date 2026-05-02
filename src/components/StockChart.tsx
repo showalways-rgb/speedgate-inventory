@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { isVirtualOutItemName } from "@/lib/virtual-out-models";
 
 interface StockItem {
@@ -17,6 +18,10 @@ interface Props {
   data: StockItem[];
 }
 
+const OUT_GREEN = "#48bb78";
+const OUT_ZERO = "#cbd5e1";
+const PRIMARY = "#5b6ee8";
+const DANGER = "#dc2626";
 const TOTAL_IN_COLOR = "#64748b";
 
 function groupBySubcategory(items: StockItem[]): { subcategoryName: string; rows: StockItem[] }[] {
@@ -40,7 +45,7 @@ const headerTh: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "8px 10px",
+  padding: "10px 14px",
   textAlign: "right",
 };
 
@@ -48,7 +53,7 @@ const headerThBlank: React.CSSProperties = {
   fontSize: "13px",
   color: "#64748b",
   fontWeight: 600,
-  padding: "8px 10px",
+  padding: "10px 14px",
   textAlign: "left",
 };
 
@@ -65,8 +70,8 @@ export default function StockChart({ data }: Props) {
 
   const numCell: React.CSSProperties = {
     textAlign: "right",
-    fontSize: "14px",
-    padding: "5px 10px",
+    fontSize: "15px",
+    padding: "9px 14px",
     fontVariantNumeric: "tabular-nums",
   };
 
@@ -79,23 +84,23 @@ export default function StockChart({ data }: Props) {
     <div style={{ maxWidth: "100%", overflowX: "auto" }}>
       <table style={{ width: "max-content", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
-          <col style={{ width: "118px" }} />
-          <col style={{ width: "240px" }} />
-          <col style={{ width: "100px" }} />
-          <col style={{ width: "100px" }} />
-          <col style={{ width: "100px" }} />
+          <col style={{ width: "280px" }} />
+          <col style={{ width: "110px" }} />
+          <col style={{ width: "110px" }} />
+          <col style={{ width: "110px" }} />
         </colgroup>
         <thead>
           <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-            <th scope="col" style={{ ...headerThBlank, width: "118px" }} />
-            <th scope="col" style={{ ...headerThBlank, width: "240px" }} />
-            <th scope="col" style={{ ...headerTh, width: "100px" }}>
+            <th scope="col" style={{ ...headerThBlank, width: "280px" }}>
+              모델명
+            </th>
+            <th scope="col" style={{ ...headerTh, width: "110px" }}>
               총입고
             </th>
-            <th scope="col" style={{ ...headerTh, width: "100px" }}>
+            <th scope="col" style={{ ...headerTh, width: "110px" }}>
               출고
             </th>
-            <th scope="col" style={{ ...headerTh, width: "100px" }}>
+            <th scope="col" style={{ ...headerTh, width: "110px" }}>
               현재고
             </th>
           </tr>
@@ -104,7 +109,6 @@ export default function StockChart({ data }: Props) {
           {groups.map((group, groupIndex) =>
             group.rows.map((item, rowIndex) => {
               const isFirstInGroup = rowIndex === 0;
-              const borderTop = groupIndex > 0 && isFirstInGroup ? "1px solid #e2e8f0" : undefined;
               const totalIn = item.totalIn ?? 0;
               const totalOut = item.totalOut ?? 0;
               const cs = Math.max(0, item.currentStock ?? 0);
@@ -113,53 +117,69 @@ export default function StockChart({ data }: Props) {
                 item.virtualOut === true || isVirtualOutItemName(item.itemName);
 
               return (
-                <tr
-                  key={item.itemId}
-                  style={{
-                    borderTop,
-                    borderBottom: "1px solid #f1f5f9",
-                  }}
-                >
-                  {isFirstInGroup ? (
-                    <td
-                      rowSpan={group.rows.length}
-                      style={{
-                        width: "118px",
-                        fontSize: "13px",
-                        color: "#94a3b8",
-                        fontWeight: 500,
-                        verticalAlign: "top",
-                        paddingTop: "8px",
-                        paddingLeft: "10px",
-                        paddingRight: "8px",
-                      }}
-                    >
-                      {group.subcategoryName}
-                    </td>
-                  ) : null}
-                  <td
-                    title={item.itemName}
+                <Fragment key={item.itemId}>
+                  {isFirstInGroup && group.subcategoryName && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          padding: "10px 10px 4px 10px",
+                          borderTop: groupIndex > 0 ? "1px solid #e2e8f0" : undefined,
+                          background: "#f8fafc",
+                        }}
+                      >
+                        {group.subcategoryName}
+                      </td>
+                    </tr>
+                  )}
+                  <tr
                     style={{
-                      width: "240px",
-                      maxWidth: "240px",
-                      fontSize: "14px",
-                      color: "var(--foreground)",
-                      padding: "5px 4px 5px 10px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      borderBottom: "1px solid #f1f5f9",
                     }}
                   >
-                    {item.itemName}
-                  </td>
-                  <td style={{ ...numCellFirst, color: TOTAL_IN_COLOR, fontWeight: 500 }}>
-                    {hideVirtualInAndStock ? "" : totalIn}
-                  </td>
-                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{out > 0 ? out : "-"}</td>
-                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>
-                    {hideVirtualInAndStock ? "" : cs}
-                  </td>
-                </tr>
+                    <td
+                      title={item.itemName}
+                      style={{
+                        width: "280px",
+                        maxWidth: "280px",
+                        fontSize: "15px",
+                        color: "var(--foreground)",
+                        padding: "9px 4px 9px 12px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {item.itemName}
+                    </td>
+                    <td style={{ ...numCellFirst, color: TOTAL_IN_COLOR, fontWeight: 500 }}>
+                      {hideVirtualInAndStock ? "" : totalIn}
+                    </td>
+                    <td
+                      style={{
+                        ...numCell,
+                        color: out > 0 ? OUT_GREEN : OUT_ZERO,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {out > 0 ? out : "-"}
+                    </td>
+                    <td
+                      style={{
+                        ...numCell,
+                        color: hideVirtualInAndStock ? OUT_ZERO : cs === 0 ? DANGER : PRIMARY,
+                        fontWeight: hideVirtualInAndStock ? 500 : 700,
+                      }}
+                    >
+                      {hideVirtualInAndStock ? "" : cs}
+                    </td>
+                  </tr>
+                </Fragment>
               );
             })
           )}
