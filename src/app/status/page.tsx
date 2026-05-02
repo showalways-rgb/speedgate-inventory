@@ -38,7 +38,7 @@ interface ItemRow {
 }
 
 const thStyle: React.CSSProperties = {
-  padding: "10px 14px",
+  padding: "10px 8px",
   fontSize: "12px",
   fontWeight: 600,
   color: "var(--muted)",
@@ -48,7 +48,7 @@ const thStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 const tdStyle: React.CSSProperties = {
-  padding: "8px 10px",
+  padding: "8px 8px",
   fontSize: "13px",
   borderBottom: "1px solid var(--border)",
   whiteSpace: "nowrap",
