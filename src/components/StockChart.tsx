@@ -66,7 +66,7 @@ export default function StockChart({ data }: Props) {
   const numCell: React.CSSProperties = {
     textAlign: "right",
     fontSize: "14px",
-    padding: "8px 16px",
+    padding: "5px 16px",
     fontVariantNumeric: "tabular-nums",
   };
 
@@ -115,7 +115,7 @@ export default function StockChart({ data }: Props) {
                         color: "#94a3b8",
                         fontWeight: 500,
                         verticalAlign: "top",
-                        paddingTop: "14px",
+                        paddingTop: "8px",
                         paddingLeft: "12px",
                         paddingRight: "12px",
                       }}
@@ -128,7 +128,7 @@ export default function StockChart({ data }: Props) {
                     style={{
                       fontSize: "14px",
                       color: "var(--foreground)",
-                      padding: "8px 12px",
+                      padding: "5px 12px",
                       maxWidth: "280px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
