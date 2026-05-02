@@ -236,8 +236,6 @@ export default function StockOutPage() {
             <input type="text" style={input} value={note} onChange={e => setNote(e.target.value)} placeholder="거래처명 또는 프로젝트명" />
           </div>
 
-          <div style={{ marginBottom: "8px", fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>추가모듈</div>
-
           <div style={{ marginBottom: "14px" }}>
             <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
