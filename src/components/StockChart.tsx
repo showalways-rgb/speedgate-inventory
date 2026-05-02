@@ -3,6 +3,7 @@
 interface StockItem {
   itemId: number;
   itemName: string;
+  subcategoryName: string;
   totalIn: number;
   totalOut: number;
   currentStock: number;
@@ -14,24 +15,42 @@ interface Props {
   data: StockItem[];
 }
 
-const STOCK_BLUE = "#5b6ee8";
 const OUT_GREEN = "#48bb78";
-const TOTAL_IN_MUTED = "#cbd5e1";
-const TOTAL_IN_LABEL = "#64748b";
+const OUT_ZERO = "#cbd5e1";
+const TOTAL_IN_COLOR = "#64748b";
 
-function LegendSwatch({ color }: { color: string }) {
-  return (
-    <span
-      style={{
-        width: "12px",
-        height: "12px",
-        borderRadius: "2px",
-        backgroundColor: color,
-        flexShrink: 0,
-      }}
-    />
-  );
+function groupBySubcategory(items: StockItem[]): { subcategoryName: string; rows: StockItem[] }[] {
+  const order: string[] = [];
+  const map = new Map<string, StockItem[]>();
+  for (const item of items) {
+    const key = item.subcategoryName ?? "";
+    if (!map.has(key)) {
+      order.push(key);
+      map.set(key, []);
+    }
+    map.get(key)!.push(item);
+  }
+  return order.map((subcategoryName) => ({
+    subcategoryName,
+    rows: map.get(subcategoryName)!,
+  }));
 }
+
+const headerTh: React.CSSProperties = {
+  fontSize: "13px",
+  color: "#64748b",
+  fontWeight: 600,
+  padding: "10px 16px",
+  textAlign: "right",
+};
+
+const headerThBlank: React.CSSProperties = {
+  fontSize: "13px",
+  color: "#64748b",
+  fontWeight: 600,
+  padding: "10px 12px",
+  textAlign: "left",
+};
 
 export default function StockChart({ data }: Props) {
   if (!data.length) {
@@ -42,151 +61,107 @@ export default function StockChart({ data }: Props) {
     );
   }
 
-  const totals = data.map((d) => ({
-    cs: Math.max(0, d.currentStock ?? 0),
-    out: Math.max(0, d.totalOut ?? 0),
-  }));
-  const maxBarTotal = Math.max(...totals.map((t) => t.cs + t.out), 1);
+  const groups = groupBySubcategory(data);
 
-  const rowFlex: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "8px",
-  };
-
-  const statsGridStyle: React.CSSProperties = {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    minWidth: "200px",
-    flexShrink: 0,
+  const numCell: React.CSSProperties = {
+    textAlign: "right",
+    fontSize: "14px",
+    padding: "8px 16px",
     fontVariantNumeric: "tabular-nums",
   };
 
   return (
     <div style={{ width: "100%", overflowX: "auto" }}>
-      <div style={{ display: "flex", gap: "20px", marginBottom: "16px", fontSize: "12px", flexWrap: "wrap" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <LegendSwatch color={STOCK_BLUE} /> 현재고
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-          <LegendSwatch color={OUT_GREEN} /> 출고 (수량)
-        </span>
-      </div>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
+            <th scope="col" style={{ ...headerThBlank, width: "130px" }} />
+            <th scope="col" style={headerThBlank} />
+            <th scope="col" style={headerTh}>
+              총입고
+            </th>
+            <th scope="col" style={headerTh}>
+              출고
+            </th>
+            <th scope="col" style={headerTh}>
+              현재고
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {groups.map((group, groupIndex) =>
+            group.rows.map((item, rowIndex) => {
+              const isFirstInGroup = rowIndex === 0;
+              const borderTop = groupIndex > 0 && isFirstInGroup ? "1px solid #e2e8f0" : undefined;
+              const totalIn = item.totalIn ?? 0;
+              const totalOut = item.totalOut ?? 0;
+              const cs = Math.max(0, item.currentStock ?? 0);
+              const out = Math.max(0, totalOut);
 
-      {data.map((item) => {
-        const totalIn = item.totalIn ?? 0;
-        const totalOut = item.totalOut ?? 0;
-        const currentStock = item.currentStock ?? 0;
-        const cs = Math.max(0, currentStock);
-        const out = Math.max(0, totalOut);
-        const barSum = cs + out;
-        const emptyRow = totalIn === 0 && totalOut === 0;
-
-        if (emptyRow) {
-          return (
-            <div key={item.itemId} style={rowFlex}>
-              <div
-                title={item.itemName}
-                style={{
-                  width: "160px",
-                  textAlign: "right",
-                  fontSize: "13px",
-                  flexShrink: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {item.itemName}
-              </div>
-              <div style={{ flex: 1, minWidth: "80px", maxWidth: "480px" }} />
-              <div style={statsGridStyle}>
-                <span style={{ fontSize: "14px", fontWeight: 700, width: "40px", textAlign: "right", color: TOTAL_IN_MUTED }}>
-                  -
-                </span>
-                <span style={{ fontSize: "14px", width: "50px", color: TOTAL_IN_MUTED }}>-</span>
-                <span
+              return (
+                <tr
+                  key={item.itemId}
                   style={{
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: TOTAL_IN_LABEL,
-                    whiteSpace: "nowrap",
+                    borderTop,
+                    borderBottom: "1px solid #f1f5f9",
                   }}
                 >
-                  총입고 {totalIn}
-                </span>
-              </div>
-            </div>
-          );
-        }
-
-        const barScale = Math.min(100, (barSum / maxBarTotal) * 100);
-        const inPct = barSum <= 0 ? 0 : (cs / barSum) * 100;
-        const outPct = barSum <= 0 ? 0 : (out / barSum) * 100;
-
-        return (
-          <div key={item.itemId} style={rowFlex}>
-            <div
-              title={item.itemName}
-              style={{
-                width: "160px",
-                textAlign: "right",
-                fontSize: "13px",
-                flexShrink: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {item.itemName}
-            </div>
-
-            <div style={{ flex: 1, minWidth: "80px", maxWidth: "480px" }}>
-              <div
-                style={{
-                  width: `${barScale}%`,
-                  maxWidth: "100%",
-                  display: "flex",
-                  alignItems: "stretch",
-                  height: "10px",
-                  borderRadius: "5px",
-                  overflow: "hidden",
-                }}
-              >
-                {cs > 0 && (
-                  <div style={{ flex: `${inPct} 1 0%`, minWidth: 0, backgroundColor: STOCK_BLUE }} />
-                )}
-                {out > 0 && (
-                  <div style={{ flex: `${outPct} 1 0%`, minWidth: 0, backgroundColor: OUT_GREEN }} />
-                )}
-              </div>
-            </div>
-
-            <div style={statsGridStyle}>
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  width: "40px",
-                  textAlign: "right",
-                  color: cs === 0 ? "#dc2626" : "var(--primary)",
-                }}
-              >
-                {cs}
-              </span>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: OUT_GREEN, width: "50px" }}>
-                {out > 0 ? `/ 출고 ${out}` : ""}
-              </span>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: TOTAL_IN_LABEL, whiteSpace: "nowrap" }}>
-                총입고 {totalIn}
-              </span>
-            </div>
-          </div>
-        );
-      })}
+                  {isFirstInGroup ? (
+                    <td
+                      rowSpan={group.rows.length}
+                      style={{
+                        width: "130px",
+                        fontSize: "13px",
+                        color: "#94a3b8",
+                        fontWeight: 500,
+                        verticalAlign: "top",
+                        paddingTop: "14px",
+                        paddingLeft: "12px",
+                        paddingRight: "12px",
+                      }}
+                    >
+                      {group.subcategoryName}
+                    </td>
+                  ) : null}
+                  <td
+                    title={item.itemName}
+                    style={{
+                      fontSize: "14px",
+                      color: "var(--foreground)",
+                      padding: "8px 12px",
+                      maxWidth: "280px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item.itemName}
+                  </td>
+                  <td style={{ ...numCell, color: TOTAL_IN_COLOR, fontWeight: 500 }}>{totalIn}</td>
+                  <td
+                    style={{
+                      ...numCell,
+                      color: out > 0 ? OUT_GREEN : OUT_ZERO,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {out > 0 ? out : "-"}
+                  </td>
+                  <td
+                    style={{
+                      ...numCell,
+                      color: cs === 0 ? "#dc2626" : "var(--primary)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {cs}
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
