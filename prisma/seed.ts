@@ -42,6 +42,10 @@ const SEED_DATA = [
           "AC-2100 SC", "AC-2200 SC", "AC-1100 RF", "AC-2200 RF",
         ],
       },
+      {
+        name: "RFID",
+        items: [],
+      },
     ],
   },
   {
