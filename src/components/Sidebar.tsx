@@ -44,7 +44,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
         boxShadow: isOpen ? "4px 0 20px rgba(0,0,0,0.12)" : "none",
       }
     : {
-        width: "220px",
+        width: "180px",
         minHeight: "100vh",
         background: "var(--sidebar-bg)",
         borderRight: "1px solid var(--border)",
@@ -57,7 +57,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
 
   return (
     <aside style={sidebarStyle}>
-      <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border)" }}>
+      <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
@@ -66,7 +66,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
             }}>
               <Package size={20} color="#5b6ee8" />
             </div>
-            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "16px", lineHeight: 1.3 }}>
+            <span style={{ color: "#2d3748", fontWeight: 700, fontSize: "14px", lineHeight: 1.3 }}>
               재고관리 시스템
             </span>
           </div>
@@ -83,7 +83,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
         </div>
       </div>
 
-      <nav style={{ padding: "12px 10px", flex: 1 }}>
+      <nav style={{ padding: "8px 8px", flex: 1 }}>
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -93,11 +93,11 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
               onClick={isMobile ? onClose : undefined}
               style={{
                 display: "flex", alignItems: "center", gap: "12px",
-                padding: "11px 12px", borderRadius: "8px", marginBottom: "2px",
+                padding: "8px 10px", borderRadius: "8px", marginBottom: "2px",
                 color: active ? "#4338ca" : "var(--sidebar-text)",
                 background: active ? "#eef2ff" : "transparent",
                 textDecoration: "none",
-                fontSize: "14px", fontWeight: active ? 600 : 400,
+                fontSize: "13px", fontWeight: active ? 600 : 400,
                 transition: "background 0.15s",
               }}
               onMouseEnter={(e) => {
@@ -114,7 +114,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
         })}
       </nav>
 
-      <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border)", color: "#a0aec0", fontSize: "11px" }}>
+      <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", color: "#a0aec0", fontSize: "11px" }}>
         © 2025 Cian
       </div>
     </aside>

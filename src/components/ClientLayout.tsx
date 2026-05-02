@@ -43,7 +43,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {/* 메인 콘텐츠 */}
       <main
         style={{
-          marginLeft: isMobile ? 0 : "220px",
+          marginLeft: isMobile ? 0 : "180px",
           flex: 1,
           minHeight: "100vh",
           maxWidth: "100%",
@@ -76,7 +76,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         )}
 
-        <div style={{ padding: isMobile ? "20px 16px" : "32px" }}>
+        <div style={{ padding: isMobile ? "20px 16px" : "24px 20px" }}>
           {children}
         </div>
       </main>
