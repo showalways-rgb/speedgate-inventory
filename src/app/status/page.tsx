@@ -377,7 +377,7 @@ export default function StatusPage() {
                     onMouseEnter={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "#f8fafc")}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLTableRowElement).style.background = "white")}
                   >
-                    <td style={tdStyle}>{tx.date.slice(5, 10).replace("-", "/")}</td>
+                    <td style={tdStyle}>{tx.date.slice(0, 10)}</td>
                     <td style={tdStyle}>
                       <span
                         style={{
