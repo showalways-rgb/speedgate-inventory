@@ -76,7 +76,7 @@ export default function StockChart({ data }: Props) {
         <thead>
           <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
             <th scope="col" style={{ ...headerThBlank, width: "130px" }} />
-            <th scope="col" style={headerThBlank} />
+            <th scope="col" style={{ ...headerThBlank, width: "200px" }} />
             <th scope="col" style={headerTh}>
               총입고
             </th>
@@ -126,10 +126,11 @@ export default function StockChart({ data }: Props) {
                   <td
                     title={item.itemName}
                     style={{
+                      width: "200px",
+                      maxWidth: "200px",
                       fontSize: "14px",
                       color: "var(--foreground)",
                       padding: "5px 12px",
-                      maxWidth: "280px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
