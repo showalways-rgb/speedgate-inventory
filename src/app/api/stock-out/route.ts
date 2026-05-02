@@ -164,7 +164,7 @@ export async function POST(req: Request) {
               itemId: itemRow.id,
               type: "OUT",
               quantity: need,
-              note: null,
+              note: noteStr,
               addon: addonLabels[0] ?? null,
               price: addonPrice != null ? Number(addonPrice) : null,
               date: new Date(date),
