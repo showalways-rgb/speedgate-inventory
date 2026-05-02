@@ -23,9 +23,6 @@ const smLabel: React.CSSProperties = { ...label, fontSize: "11px", marginBottom:
 
 const GREEN = "#16a34a";
 const GREEN_DARK = "#15803d";
-const ADDON_ACCENT = "#6366f1";
-
-const BRACKET_ITEMS = ["브라켓(대)_KJZ-03", "브라켓(소)_Rots-02", "Rots-02연장봉"];
 
 function CardHeader({
   accent, icon: Icon, badge, title, desc,
@@ -53,18 +50,6 @@ function CardHeader({
   );
 }
 
-function sortOptions(opts: AddonOption[]): AddonOption[] {
-  const order = ["이동식플레이트", "브라켓", "케이블덕트"];
-  return [...opts].sort((a, b) => {
-    const ai = order.findIndex((k) => a.value.startsWith(k));
-    const bi = order.findIndex((k) => b.value.startsWith(k));
-    const ap = ai === -1 ? order.length : ai;
-    const bp = bi === -1 ? order.length : bi;
-    if (ap !== bp) return ap - bp;
-    return a.value.localeCompare(b.value, "ko");
-  });
-}
-
 export default function StockOutPage() {
   const [selected, setSelected] = useState<{ categoryId: number; categoryName: string; subcategoryId: number; itemId: number; itemName: string } | null>(null);
   const [currentStock, setCurrentStock] = useState<number | null>(null);
@@ -72,7 +57,6 @@ export default function StockOutPage() {
   const [quantity, setQuantity] = useState("1");
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
-  const [addon, setAddon] = useState("");
   const [loading, setLoading] = useState(false);
   type CompanionRange = { name: string; seqFrom: number; seqTo: number };
   type StockOutResult =
@@ -81,10 +65,8 @@ export default function StockOutPage() {
   const [result, setResult] = useState<StockOutResult | null>(null);
   const [error, setError] = useState("");
   const [addonOptions, setAddonOptions] = useState<AddonOption[]>([]);
-  const [bracketItem, setBracketItem] = useState("");
-  const [bracketQty, setBracketQty] = useState("1");
-  const [addonFifoPrice, setAddonFifoPrice] = useState<number | null>(null);
-  const [bracketFifoPrice, setBracketFifoPrice] = useState<number | null>(null);
+  const [extraItem, setExtraItem] = useState("");
+  const [extraQty, setExtraQty] = useState("1");
 
   const qty = Number(quantity) || 0;
   const unitPrice = Number(price.replace(/,/g, "")) || 0;
@@ -125,28 +107,6 @@ export default function StockOutPage() {
     };
   }, [selected, handlePriceChange]);
 
-  const handleAddonToggle = async (value: string) => {
-    const next = addon === value ? "" : value;
-    setAddon(next);
-    if (next) {
-      const res = await fetch(`/api/stock-out/fifo-price?itemName=${encodeURIComponent(next)}`).then((r) => r.json());
-      setAddonFifoPrice(res.price ?? null);
-    } else {
-      setAddonFifoPrice(null);
-    }
-  };
-
-  const handleBracketChange = async (value: string) => {
-    setBracketItem(value);
-    setBracketQty("1");
-    if (value) {
-      const res = await fetch(`/api/stock-out/fifo-price?itemName=${encodeURIComponent(value)}`).then((r) => r.json());
-      setBracketFifoPrice(res.price ?? null);
-    } else {
-      setBracketFifoPrice(null);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!selected?.itemId) { setError("모델을 선택해주세요."); return; }
     if (!qty || qty < 1) { setError("수량을 올바르게 입력해주세요."); return; }
@@ -159,15 +119,6 @@ export default function StockOutPage() {
 
     setLoading(true); setError(""); setResult(null);
     try {
-      let freshAddonPrice: number | null = null;
-      const addonTrim = addon.trim();
-      if (addonTrim) {
-        const addonPriceRes = await fetch(
-          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(addonTrim)}`
-        ).then((r) => r.json());
-        freshAddonPrice = addonPriceRes.price ?? null;
-      }
-
       const res = await fetch("/api/stock-out", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -176,35 +127,32 @@ export default function StockOutPage() {
           quantity: qty,
           price: unitPrice || null,
           note: note || null,
-          addon: addonTrim || null,
-          addonPrice: freshAddonPrice,
           date,
         }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "오류가 발생했습니다."); return; }
 
-      if (bracketItem) {
+      if (extraItem) {
         const priceRes = await fetch(
-          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(bracketItem)}`
+          `/api/stock-out/fifo-price?itemName=${encodeURIComponent(extraItem)}`
         ).then((r) => r.json());
-        const freshBracketPrice = priceRes.price ?? null;
 
-        const bracketRes = await fetch("/api/stock-out", {
+        const extraRes = await fetch("/api/stock-out", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            itemName: bracketItem,
-            quantity: Number(bracketQty) || 1,
-            price: freshBracketPrice,
+            itemName: extraItem,
+            quantity: Number(extraQty) || 1,
+            price: priceRes.price ?? null,
             note: note || null,
             addon: null,
             date,
           }),
         });
-        const bracketData = await bracketRes.json();
-        if (!bracketRes.ok) {
-          setError(bracketData.error ?? "브라켓 출고 오류");
+        const extraData = await extraRes.json();
+        if (!extraRes.ok) {
+          setError(extraData.error ?? "추가모듈 출고 오류");
           return;
         }
       }
@@ -233,10 +181,8 @@ export default function StockOutPage() {
         });
         setCurrentStock(prev => (prev ?? 0) - qty);
       }
-      setQuantity("1"); setPrice(""); setNote(""); setAddon("");
-      setBracketItem(""); setBracketQty("1");
-      setAddonFifoPrice(null);
-      setBracketFifoPrice(null);
+      setQuantity("1"); setPrice(""); setNote("");
+      setExtraItem(""); setExtraQty("1");
       setSelected(null);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -304,46 +250,21 @@ export default function StockOutPage() {
           </div>
 
           <div style={{ marginBottom: "14px" }}>
-            <label style={{ ...smLabel, color: ADDON_ACCENT }}>추가모듈</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-              {sortOptions(addonOptions)
-                .filter((o) => !BRACKET_ITEMS.includes(o.value))
-                .map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => void handleAddonToggle(o.value)}
-                  style={{
-                    padding: "5px 12px", borderRadius: "999px", fontSize: "12px",
-                    border: `1px solid ${addon === o.value ? ADDON_ACCENT : "var(--border)"}`,
-                    background: addon === o.value ? `${ADDON_ACCENT}15` : "white",
-                    color: addon === o.value ? ADDON_ACCENT : "var(--foreground)",
-                    fontWeight: addon === o.value ? 600 : 500,
-                    cursor: "pointer",
-                  }}
-                >
-                  {o.value}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "14px" }}>
-            <label style={smLabel}>브라켓 / Rots</label>
+            <label style={smLabel}>추가모듈</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
-              <select style={input} value={bracketItem} onChange={(e) => void handleBracketChange(e.target.value)}>
+              <select style={input} value={extraItem} onChange={(e) => setExtraItem(e.target.value)}>
                 <option value="">선택 안함</option>
-                {BRACKET_ITEMS.map((v) => (
-                  <option key={v} value={v}>{v}</option>
+                {addonOptions.map((o) => (
+                  <option key={o.id} value={o.value}>{o.value}</option>
                 ))}
               </select>
               <input
                 type="number"
                 min={1}
                 style={{ ...input, width: "80px" }}
-                value={bracketQty}
-                onChange={(e) => setBracketQty(e.target.value)}
-                disabled={!bracketItem}
+                value={extraQty}
+                onChange={(e) => setExtraQty(e.target.value)}
+                disabled={!extraItem}
               />
             </div>
           </div>
